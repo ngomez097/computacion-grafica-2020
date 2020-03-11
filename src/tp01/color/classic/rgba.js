@@ -1,18 +1,20 @@
-class RGBA{
-    onstructor(r,g,b,a){
-        this.r = r
-        this.g = g
-        this.b = b
-        this.a = a
-    }
+const mathUtils = require('./mathUtils')
 
-    get vec3(){
-        return [r,g,b]
-    }
+class RGBA {
+  constructor (r, g, b, a) {
+    this.r = mathUtils.clamp(r, 0, 1)
+    this.g = mathUtils.clamp(g, 0, 1)
+    this.b = mathUtils.clamp(b, 0, 1)
+    this.a = mathUtils.clamp(a, 0, 1)
+  }
 
-    get vec4(){
-        return [r,g,b,a]
-    }
+  vec3 () {
+    return [this.r, this.g, this.b]
+  }
+
+  vec4 () {
+    return [this.r, this.g, this.b, this.a]
+  }
 }
 
 module.exports = RGBA
