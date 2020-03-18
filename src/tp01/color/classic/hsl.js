@@ -1,11 +1,9 @@
 const RGBA = require('./rgba')
 const mathUtils = require('./mathUtils')
 
-// Se saco la forma de transformar del siguiente
-// link: https://en.wikipedia.org/wiki/HSL_and_HSV
 class HSL extends RGBA {
   constructor (h, s, l) {
-    let hsl = [0, 0, 0]
+    let hsl = []
     hsl[0] = mathUtils.clamp(h, 0, 360)
     hsl[1] = mathUtils.clamp(s, 0, 1)
     hsl[2] = mathUtils.clamp(l, 0, 1)

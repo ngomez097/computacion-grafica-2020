@@ -1,3 +1,6 @@
+/**
+ * Función para asegurar que los valores estén dentro del rango debido
+ */
 const clamp = function (value, min, max) {
   if (value < min) {
     return min
@@ -7,6 +10,11 @@ const clamp = function (value, min, max) {
   return value
 }
 
+/**
+ * Función para transformar de HSL a RGB.
+ * Se sacó la forma de transformar hsl a rgb del siguiente
+ * link: https://en.wikipedia.org/wiki/HSL_and_HSV
+ */
 const hslF = function (n, hsl) {
   let k = (n + hsl[0] / 30) % 12
   let a = hsl[1] * Math.min(hsl[2], 1 - hsl[2])
