@@ -34,7 +34,7 @@ class WebGLRender {
     this._gl.linkProgram(this.prg)
 
     if (!this._gl.getProgramParameter(this.prg, this._gl.LINK_STATUS)) {
-      alert('Could not initialise shaders')
+      console.error('Could not initialise shaders')
     }
 
     this._gl.useProgram(this.prg)
@@ -60,9 +60,7 @@ class WebGLRender {
       new Float32Array(vertexArray),
       this._gl.STATIC_DRAW)
 
-    webGLUtil.setUniformLocation('xFactor', 1.0)
-    webGLUtil.setUniformLocation('yFactor', 1.0)
-    webGLUtil.bindAttributeArrayFloat('aVertexPosition', 2)
+    webGLUtil.bindAttributeArrayFloat(this._gl, this.prg, 'a_VertexPosition', 2)
     // Desvinculacion del buffer
     this._gl.bindBuffer(this._gl.ARRAY_BUFFER, null)
   }
@@ -92,8 +90,12 @@ class WebGLRender {
     this._gl.drawElements(this._gl.LINE_LOOP, indexArray.length, this._gl.UNSIGNED_SHORT, 0)
   }
 
+  clearBackground (color) {
+    webGLUtil.resizeCanvas(this._gl)
+    webGLUtil.paintBackground(this._gl, color)
+  }
+
   render (scene = new Scene()) {
-    webGLUtil.paintBackground(this._gl, scene.clearColor)
     let meshes = scene.meshes
     for (let mesh of meshes) {
       let vertices = mesh.geometry.getVertices2DToArray()
@@ -101,7 +103,11 @@ class WebGLRender {
 
       this.setVertexBuffer2D(vertices)
       this.setIndexBuffer(faces)
-      this.drawElementsTriangle(faces)
+      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Transform', mesh.t)
+      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Scale', mesh.s)
+      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Color', mesh.material)
+      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Rotate', mesh.r)
+      this.drawElementsLineLoop(faces)
     }
   }
 }

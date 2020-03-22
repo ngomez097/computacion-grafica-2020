@@ -22,6 +22,14 @@ const setUniformLocation = function (gl, prg, attr, value) {
   if (typeof value === 'number') {
     gl.uniform1f(atribute, value)
   }
+  if (typeof value === 'object') {
+    if (value.length === 3) {
+      gl.uniform3fv(atribute, value)
+    }
+    if (value.length === 2) {
+      gl.uniform2fv(atribute, value)
+    }
+  }
 }
 
 const bindAttributeArrayFloat = function (gl, prg, attribute, vertexElements) {

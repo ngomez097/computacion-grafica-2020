@@ -7,7 +7,7 @@ class RegularConvexPolygonGeometry extends Geometry {
       edges = 4
     }
     this.edges = edges
-    this.getVerticesWithFaces()
+    this.calculateVerticesWithFaces()
   }
 
   /** Funcion para obtener los vertices del poligono
@@ -16,11 +16,9 @@ class RegularConvexPolygonGeometry extends Geometry {
    * Un arreglo donde el primer elemento
    * son los vertices en el formato [[x1,y1,0],..,[xn,yn,0]] y
    * el segundo son las caras en el formato [[f11,f12,f12],[fn1,fn2,fn3]] */
-  getVerticesWithFaces () {
-    if (this.vertices.length !== 0) {
-      return
-    }
+  calculateVerticesWithFaces () {
     this.vertices = [[0, 0]]
+    this.faces = []
     let dt = Math.PI * 2 / this.edges
     let angle = Math.PI / (this.edges + this.edges % 2 * this.edges)
 

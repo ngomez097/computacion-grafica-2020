@@ -11,8 +11,11 @@ class Scene {
     }
   }
 
-  addMesh (mesh) {
-    this.meshes.push(mesh)
+  /** Funcion para agregar varios mesh a la escena. */
+  addMesh (...meshes) {
+    for (let mesh of meshes) {
+      this.meshes.push(mesh)
+    }
   }
 }
 

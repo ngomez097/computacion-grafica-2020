@@ -1,19 +1,16 @@
 class Mesh {
-  constructor (geometry, material) {
+  constructor (geometry, material = [1.0, 1.0, 1.0]) {
     this.geometry = geometry
-    this.meterial = material
-    this.tx = 0
-    this.ty = 0
-    this.tz = 0
-    this.rx = 0
-    this.ry = 0
-    this.rz = 0
-    this.sx = 1
-    this.sy = 1
-    this.sz = 1
+    this.material = material
+    this.t = [0.0, 0.0, 0.0]
+    this.r = [0.0, 0.0, 0.0]
+    this.s = [1.0, 1.0, 1.0]
     this.modelMatrix = null
   }
 
+  /**
+   * Funcion para establecer la geometria.
+   */
   setGeometry (geometry) {
     this.geometry = geometry
   }
