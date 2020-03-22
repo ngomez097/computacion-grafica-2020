@@ -5,6 +5,6 @@ varying vec4 vColor;
 
 void main() {
   gl_Position = aPosition;
-  vColor = aColor;
   gl_PointSize = 10.0;
+  vColor = aColor;
 }
