@@ -1,55 +1,44 @@
-const WebGLUtils = require('./WebGLUtil')
+const Geometry = require('./Geometry')
 
-class RegularConvexPolygonGeometry {
-  constructor (count = 4, radius = 1,
-    fill = true, canvasName) {
-    if (count < 4) {
-      count = 4
+class RegularConvexPolygonGeometry extends Geometry {
+  constructor (edges) {
+    super()
+    if (edges < 4) {
+      edges = 4
     }
-    this.n = count
-    this.radius = radius
-    this.fill = fill
-    this.canvasName = canvasName
+    this.edges = edges
+    this.getVerticesWithFaces()
   }
 
   /** Funcion para obtener los vertices del poligono
-   * y sus indices. */
-  getVerticesWithIndex () {
-    let vertices = [0, 0]
-    let indices = []
-    let dt = Math.PI * 2 / this.n
-    let angle = Math.PI / (this.n + this.n % 2 * this.n)
+   * y sus caras(indices).
+   * @returns
+   * Un arreglo donde el primer elemento
+   * son los vertices en el formato [[x1,y1,0],..,[xn,yn,0]] y
+   * el segundo son las caras en el formato [[f11,f12,f12],[fn1,fn2,fn3]] */
+  getVerticesWithFaces () {
+    if (this.vertices.length !== 0) {
+      return
+    }
+    this.vertices = [[0, 0]]
+    let dt = Math.PI * 2 / this.edges
+    let angle = Math.PI / (this.edges + this.edges % 2 * this.edges)
 
-    for (let i = 1; i <= this.n; i++) {
-      vertices.push(this.radius * Math.cos(angle))
-      vertices.push(this.radius * Math.sin(angle))
-      if (i !== this.n) {
-        indices.push(0, i, i + 1)
+    for (let i = 1; i <= this.edges; i++) {
+      this.vertices.push([
+        Math.cos(angle),
+        Math.sin(angle),
+        0
+      ])
+      if (i !== this.edges) {
+        this.faces.push([0, i, i + 1])
       } else {
-        indices.push(0, i, 1)
+        this.faces.push([0, i, 1])
       }
       angle += dt
     }
 
-    return [vertices, indices]
-  }
-
-  /** Funcion para dibujar el poligono en el canvas dado. */
-  draw () {
-    let glUtil = new WebGLUtils(this.canvasName)
-    glUtil.initWebGL(this.canvasName)
-    glUtil.paintBackground()
-
-    let vertexIndex = this.getVerticesWithIndex()
-
-    glUtil.setVertexBuffer2D(vertexIndex[0])
-    glUtil.setIndexBuffer(vertexIndex[1])
-
-    if (this.fill) {
-      glUtil.drawElementsTriangle(vertexIndex[1])
-    } else {
-      glUtil.drawElementsLineLoop(vertexIndex[1])
-    }
+    return [this.vertices, this.verticesindices]
   }
 }
 
