@@ -95,7 +95,12 @@ class WebGLRender {
     webGLUtil.paintBackground(this._gl, color)
   }
 
-  render (scene = new Scene()) {
+  /**
+   * Metodo para dibjur en el canvas la escena.
+   * @param scene Escena a dibujar.
+   * @param {boolean} wireframe determina si se dibuja el wireframe, default = false.
+   */
+  render (scene = new Scene(), wireframe = false) {
     let meshes = scene.meshes
     for (let mesh of meshes) {
       let vertices = mesh.geometry.getVertices2DToArray()
@@ -107,7 +112,12 @@ class WebGLRender {
       webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Scale', mesh.s)
       webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Color', mesh.material)
       webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Rotate', mesh.r)
-      this.drawElementsLineLoop(faces)
+
+      if (!wireframe) {
+        this.drawElementsTriangle(faces)
+      } else {
+        this.drawElementsLineLoop(faces)
+      }
     }
   }
 }
