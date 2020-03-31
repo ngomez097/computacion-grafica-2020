@@ -32,6 +32,9 @@ const setUniformLocation = function (gl, prg, attr, value) {
   }
 }
 
+/**
+ * Funcion para establecer el atributo de un buffer.
+ */
 const bindAttributeArrayFloat = function (gl, prg, attribute, vertexElements) {
   let aAttribute = gl.getAttribLocation(prg, attribute)
   gl.vertexAttribPointer(aAttribute

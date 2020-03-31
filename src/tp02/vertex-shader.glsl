@@ -4,6 +4,7 @@ uniform vec3 u_Scale;
 uniform vec3 u_Rotate;
 uniform vec3 u_Color;
 
+
 varying vec3 f_Color;
 
 vec3 pos;

@@ -29,9 +29,9 @@ class RegularConvexPolygonGeometry extends Geometry {
         0
       ])
       if (i !== this.edges) {
-        this.faces.push([0, i, i + 1])
+        this.faces.push([0, i + 1, i])
       } else {
-        this.faces.push([0, i, 1])
+        this.faces.push([0, 1, i])
       }
       angle += dt
     }

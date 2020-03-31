@@ -9,12 +9,19 @@ class Scene {
     } else {
       this.clearColor = clearColor
     }
+    this.axes = []
   }
 
   /** Funcion para agregar varios mesh a la escena. */
   addMesh (...meshes) {
     for (let mesh of meshes) {
       this.meshes.push(mesh)
+    }
+  }
+
+  addAxes (...axes) {
+    for (let axe of axes) {
+      this.axes.push(axe)
     }
   }
 }

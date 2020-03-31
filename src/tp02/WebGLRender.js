@@ -26,11 +26,11 @@ class WebGLRender {
     if (this.prg != null) {
       return
     }
-    var vxShader = this.getShader('./vertex-shader.glsl', this._gl.VERTEX_SHADER)
-    var fgShader = this.getShader('./fragment-shader.glsl', this._gl.FRAGMENT_SHADER)
     this.prg = this._gl.createProgram()
-    this._gl.attachShader(this.prg, vxShader)
-    this._gl.attachShader(this.prg, fgShader)
+
+    this.initShader('./vertex-shader.glsl', this._gl.VERTEX_SHADER)
+    this.initShader('./fragment-shader.glsl', this._gl.FRAGMENT_SHADER)
+
     this._gl.linkProgram(this.prg)
 
     if (!this._gl.getProgramParameter(this.prg, this._gl.LINK_STATUS)) {
@@ -40,13 +40,12 @@ class WebGLRender {
     this._gl.useProgram(this.prg)
   }
 
-  getShader (pathShader, type) {
+  initShader (pathShader, type) {
     const source = require('' + pathShader)
     let shader = this._gl.createShader(type)
     this._gl.shaderSource(shader, source)
     this._gl.compileShader(shader)
-
-    return shader
+    this._gl.attachShader(this.prg, shader)
   }
 
   /** Funcion que recibe un arraglo de vertices 2D float
@@ -90,6 +89,11 @@ class WebGLRender {
     this._gl.drawElements(this._gl.LINE_LOOP, indexArray.length, this._gl.UNSIGNED_SHORT, 0)
   }
 
+  drawElementsLineStrip (indexArray) {
+    this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, this.index_buffer)
+    this._gl.drawElements(this._gl.LINE_STRIP, indexArray.length, this._gl.UNSIGNED_SHORT, 0)
+  }
+
   clearBackground (color) {
     webGLUtil.resizeCanvas(this._gl)
     webGLUtil.paintBackground(this._gl, color)
@@ -100,7 +104,23 @@ class WebGLRender {
    * @param scene Escena a dibujar.
    * @param {boolean} wireframe determina si se dibuja el wireframe, default = false.
    */
-  render (scene = new Scene(), wireframe = false) {
+  render (scene = new Scene()) {
+    // Dibujar ejes si los hay
+    for (let axe of scene.axes) {
+      let vertices = axe.geometry.getVertices2DToArray()
+      let faces = axe.geometry.getFacesToArray()
+
+      this.setVertexBuffer2D(vertices)
+      this.setIndexBuffer(faces)
+      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Transform', axe.t)
+      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Scale', axe.s)
+      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Color', axe.material)
+      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Rotate', axe.r)
+
+      this.drawElementsLineStrip(faces)
+    }
+
+    // Dibujar los meshes
     let meshes = scene.meshes
     for (let mesh of meshes) {
       let vertices = mesh.geometry.getVertices2DToArray()
@@ -113,7 +133,7 @@ class WebGLRender {
       webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Color', mesh.material)
       webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Rotate', mesh.r)
 
-      if (!wireframe) {
+      if (!mesh.isWireframe) {
         this.drawElementsTriangle(faces)
       } else {
         this.drawElementsLineLoop(faces)
