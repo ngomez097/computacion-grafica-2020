@@ -1,12 +1,12 @@
 const ObjectScene = require('./ObjectScene')
-const Geometry = require('./Geometry')
-const Mesh = require('./Mesh')
+const Geometry = require('../Geometry')
+const Mesh = require('../Mesh')
 
 class GridFloor extends ObjectScene {
   constructor (size = 10) {
     super()
     let geometry = new Geometry()
-    let mesh = new Mesh(geometry, [1.0, 1.0, 1.0], Mesh.RENDER_TYPE.LINES)
+    let mesh = new Mesh(geometry, [0.5, 0.5, 0.5], Mesh.RENDER_TYPE.LINES)
     this.meshes.push(mesh)
     this.size = size
     this.calculateGrid()
@@ -24,6 +24,9 @@ class GridFloor extends ObjectScene {
       geometry.addFaces([i, i + 1])
       i += 2
     }
+
+    geometry.addFaces([0, i - 2])
+    geometry.addFaces([1, i - 1])
 
     for (let x = -offset + 1; x <= offset - 1; x++) {
       geometry.addVertices(

@@ -1,4 +1,7 @@
 class Geometry {
+  /**
+   * @param {Geometry.TYPE} type Es el tipo de geometria que se define, DEFAULT = Geometry.TYPE.3D
+   */
   constructor (type = Geometry.TYPE['3D']) {
     this.vertices = []
     this.faces = []
@@ -18,6 +21,7 @@ class Geometry {
    *  vacio o incompleto un vertice se llena con 0 los espacios faltantes.
    */
   addVertices (...vertices) {
+    console.log(vertices)
     for (let vertice of vertices) {
       for (let component of vertice) {
         this.vertices.push(component)

@@ -1,11 +1,12 @@
-const WebGLRender = require('./WebGLRender')
+const WebGLRender = require('./WebGL/WebGLRender')
 const Scene = require('./Scene.js')
 const Mesh = require('./Mesh')
 const RegularConvexPolygonGeometry = require('./RegularConvexPolygonGeometry')
-const ObjectScene = require('./ObjectScene')
-const Axes = require('./Axes')
-const PerspectiveCamera = require('./PerspectiveCamera')
-const Grid = require('./GridFloor')
+const ObjectScene = require('./Objects/ObjectScene')
+const Axes = require('./Objects/Axes')
+const PerspectiveCamera = require('./Camera/PerspectiveCamera')
+const Grid = require('./Objects/GridFloor')
+const Plane = require('./Objects/Plane')
 const dat = require('dat.gui')
 
 console.log('tp03')
@@ -23,8 +24,8 @@ const objects = {
 
 const cameraConf = {
   fov: 45,
-  center: [0, 2.0, 10.0],
-  rotate: [0, 45, 0]
+  eye: [1.5, 2.0, 5.0],
+  center: [0, 0, 0],
 }
 
 let wegGLRender
@@ -36,28 +37,41 @@ function init (canvasName) {
   let canvas = document.getElementById(canvasName)
   wegGLRender = new WebGLRender(canvas)
   camera = new PerspectiveCamera(cameraConf.fov, canvas.clientWidth / canvas.clientHeight)
+
+  // Estableciendo valores iniciales de la camara.
+  camera.eye = cameraConf.eye
   camera.center = cameraConf.center
-  camera.rotate = cameraConf.rotate
 
   let nPoligon
   let mesh
   let obj
+  // Creacion de la grilla
+  let grid = new Grid(20)
+  scene.addObjects(grid)
+
   // Creacion de los ejes
   let axes = new Axes(10, [true, true, true])
   scene.addObjects(axes)
 
-  // Creacion de la grilla
-  let grid = new Grid(10)
-  scene.addObjects(grid)
+  // Creacion de un plano.
+  let plane = new Plane(2)
+  /*let plane = new Plane(1,
+    [-1, 1, 0],
+    [-1, -1, 0],
+    [1, -1, 0],
+    [1, 1, 0]
+  )*/
+  plane.meshes[0].r[0] = 90
+  scene.addObjects(plane)
 
   // Creacion de los poligonos
-  for (let i = 1; i <= 3; i++) {
+  /*for (let i = 1; i <= 3; i++) {
     nPoligon = new RegularConvexPolygonGeometry(edges * i)
     mesh = new Mesh(nPoligon)
     mesh.t[2] = 1
     obj = new ObjectScene(mesh)
     scene.addObjects(obj)
-  }
+  }*/
 
   requestAnimationFrame(renderLoop)
 }
@@ -67,7 +81,7 @@ function renderLoop () {
   wegGLRender.clearBackground(scene.clearColor)
   wegGLRender.render(scene, camera)
 
-  for (let i = 2; i < scene.objects.length; i++) {
+  for (let i = 3; i < scene.objects.length; i++) {
     for (let mesh of scene.objects[i].meshes) {
       /** Variaciones */
 
@@ -87,14 +101,18 @@ function renderLoop () {
         ]
       }
 
-      mesh.isWireframe = objects.wireframe
+      if (objects.wireframe) {
+        mesh.renderType = Mesh.RENDER_TYPE.LINE_LOOP
+      } else {
+        mesh.renderType = Mesh.RENDER_TYPE.TRIANGLES
+      }
 
       mesh.r[0] += objects.vel
     }
   }
   // Configuracion de la camara
   camera.setFovFromDegrees(cameraConf.fov)
-  camera.center = cameraConf.center
+  camera.eye = cameraConf.eye
   camera.rotate = cameraConf.rotate
 
   objects.change_color = false
@@ -114,13 +132,13 @@ function initGUI () {
   let camera = gui.addFolder('Camera')
   camera.add(cameraConf, 'fov', 0, 90)
   let cameraPosition = camera.addFolder('Position')
-  cameraPosition.add(cameraConf.center, 0, 0, 20).name('X')
-  cameraPosition.add(cameraConf.center, 1, 0, 20).name('Y')
-  cameraPosition.add(cameraConf.center, 2, 0, 20).name('Z')
-  let cameraRotation = camera.addFolder('Rotation')
-  cameraRotation.add(cameraConf.rotate, 0, 0, 360).name('X')
-  cameraRotation.add(cameraConf.rotate, 1, 0, 360).name('Y')
-  cameraRotation.add(cameraConf.rotate, 2, 0, 360).name('Z')
+  cameraPosition.add(cameraConf.eye, 0, 0, 20).name('X')
+  cameraPosition.add(cameraConf.eye, 1, 0, 20).name('Y')
+  cameraPosition.add(cameraConf.eye, 2, 0, 20).name('Z')
+  let cameraRotation = camera.addFolder('Look At')
+  cameraRotation.add(cameraConf.center, 0, 0, 10).name('X')
+  cameraRotation.add(cameraConf.center, 1, 0, 10).name('Y')
+  cameraRotation.add(cameraConf.center, 2, 0, 10).name('Z')
 }
 
 init('c')

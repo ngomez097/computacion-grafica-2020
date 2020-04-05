@@ -1,5 +1,5 @@
-const Mesh = require('./Mesh')
-const Geometry = require('./Geometry')
+const Mesh = require('../Mesh')
+const Geometry = require('../Geometry')
 const ObjectScene = require('./ObjectScene')
 
 class Axes extends ObjectScene {

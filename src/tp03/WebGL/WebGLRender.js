@@ -1,7 +1,7 @@
 const webGLUtil = require('./WebGLUtil')
-const PerspectiveCamera = require('./PerspectiveCamera')
-const Geometry = require('./Geometry')
-const Mesh = require('./Mesh')
+const PerspectiveCamera = require('../Camera/PerspectiveCamera')
+const Geometry = require('../Geometry')
+const Mesh = require('../Mesh')
 
 class WebGLRender {
   constructor (canvas) {
