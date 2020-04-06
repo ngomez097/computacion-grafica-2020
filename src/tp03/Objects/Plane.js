@@ -10,23 +10,22 @@ class Plane extends ObjectScene {
     mesh.material = [0.8, 0.8, 0.8]
     this.meshes.push(mesh)
     this.size = size
-    console.log(vertices)
     this.constructPlane(vertices)
   }
 
   constructPlane (vertices) {
     let geometry = this.meshes[0].geometry
     let offset = this.size / 2.0
-    console.log(vertices)
+    let faces
     if (vertices.length === 0) {
-      geometry.addVertices(
+      faces = geometry.addVertices(
         [-offset, 0.0, -offset],
         [-offset, 0.0, offset],
         [offset, 0.0, offset],
         [offset, 0.0, -offset]
       )
     } else {
-      geometry.addVertices(vertices[0],
+      faces = geometry.addVertices(vertices[0],
         vertices[1],
         vertices[2],
         vertices[3]
@@ -34,8 +33,8 @@ class Plane extends ObjectScene {
     }
 
     geometry.addFaces(
-      [0, 1, 2],
-      [0, 2, 3]
+      [faces[0], faces[1], faces[2]],
+      [faces[0], faces[2], faces[3]]
     )
   }
 }

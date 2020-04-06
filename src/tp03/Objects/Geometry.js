@@ -16,20 +16,38 @@ class Geometry {
   }
 
   /**
-   * Funcion que agrega vertices al arreglo de vertices.
-   * @param {Array} vertices Un arreglo de vertices con el formato [x, y, z], si esta
-   *  vacio o incompleto un vertice se llena con 0 los espacios faltantes.
+   * Funcion que agrega vertices al arreglo de vertices y busca si ya esta insertado.
+   * @param {Array} vertices Un arreglo de vertices con el formato [x, y, z].
+   * @returns Un arreglo que contiene los indices de los vertices insertados.
    */
   addVertices (...vertices) {
-    console.log(vertices)
+    let auxIndex = this.vertices.length
+    let found = false
+    let index = []
     for (let vertice of vertices) {
+      for (let i = auxIndex - 3; i >= 0; i = i - 3) {
+        if (vertice[0] === this.vertices[i] &&
+          vertice[1] === this.vertices[i + 1] &&
+          vertice[2] === this.vertices[i + 2]
+        ) {
+          index.push(i / 3)
+          found = true
+          break
+        }
+      }
+      if (found) {
+        found = false
+        continue
+      }
+
       for (let component of vertice) {
         this.vertices.push(component)
       }
-      for (let i = vertice.length; i < this.type; i++) {
-        this.vertices.push(0)
-      }
+
+      index.push(auxIndex / 3)
+      auxIndex += 3
     }
+    return index
   }
 
   /**

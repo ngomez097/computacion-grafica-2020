@@ -1,6 +1,6 @@
 const ObjectScene = require('./ObjectScene')
-const Geometry = require('../Geometry')
-const Mesh = require('../Mesh')
+const Geometry = require('./Geometry')
+const Mesh = require('./Mesh')
 
 class GridFloor extends ObjectScene {
   constructor (size = 10) {

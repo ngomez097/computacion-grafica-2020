@@ -1,6 +1,6 @@
 const ObjectScene = require('./ObjectScene')
-const Geometry = require('../Geometry')
-const Mesh = require('../Mesh')
+const Geometry = require('./Geometry')
+const Mesh = require('./Mesh')
 
 class Cube extends ObjectScene {
   constructor (size = 1) {
@@ -8,6 +8,7 @@ class Cube extends ObjectScene {
     let geometry = new Geometry()
     let mesh = new Mesh(geometry)
     mesh.renderType = Mesh.RENDER_TYPE.TRIANGLES
+    mesh.material = [0.8, 0.8, 0.8]
     this.meshes.push(mesh)
     this.size = size
 
@@ -15,15 +16,34 @@ class Cube extends ObjectScene {
   }
 
   constructCube () {
-    let geometry = this.meshes[0].geometry
     let offset = this.size / 2
-    for (let x = 0; x < 2; x++) {
-      for (let z = 0; z < 2; z++) {
-        geometry.addVertices(
-          [offset * (2 * x - 1), offset, offset * (2 * z - 1)],
-          [offset * (2 * x - 1), -offset, offset * (2 * z - 1)]
-        )
-      }
+
+    let fixedPosition
+    for (let y = 0; y < 2; y++) {
+      // Abajo y Arriba
+      fixedPosition = (2 * y - 1) * offset
+      this.insertPlane(0,
+        [-offset, fixedPosition, -offset],
+        [-offset, fixedPosition, offset],
+        [offset, fixedPosition, offset],
+        [offset, fixedPosition, -offset]
+      )
+
+      // Atras y Frente
+      this.insertPlane(0,
+        [-offset, -offset, fixedPosition],
+        [-offset, offset, fixedPosition],
+        [offset, offset, fixedPosition],
+        [offset, -offset, fixedPosition]
+      )
+
+      // Izquierda y Derecha
+      this.insertPlane(0,
+        [fixedPosition, -offset, -offset],
+        [fixedPosition, -offset, offset],
+        [fixedPosition, offset, offset],
+        [fixedPosition, offset, -offset]
+      )
     }
   }
 }
