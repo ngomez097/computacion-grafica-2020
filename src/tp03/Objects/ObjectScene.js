@@ -1,6 +1,20 @@
+const Geometry = require('./Geometry')
+const Mesh = require('./Mesh')
+
 class ObjectScene {
-  constructor (...meshes) {
+  /**
+   * @param {Mesh.renderType} renderType Forma en la que se dibujara.
+   * @param  {...any} meshes mallas extras del objeto.
+   */
+  constructor (renderType = Mesh.RENDER_TYPE.TRIANGLES, ...meshes) {
     this.meshes = []
+
+    let geometry = new Geometry()
+    let mesh = new Mesh(geometry)
+    mesh.renderType = renderType
+    mesh.material = [0.8, 0.8, 0.8]
+    this.meshes.push(mesh)
+
     for (let mesh of meshes) {
       this.meshes.push(mesh)
     }
@@ -8,49 +22,6 @@ class ObjectScene {
 
   getMeshes () {
     return this.meshes
-  }
-
-  /**
-   * Funcion que inserta un plano a la geometria.
-   * @param {int} meshNumber numero de la malla a agregar.
-   * @param {Array} vertices Se espera que se manden exactamente 4 vertices.
-   */
-  insertPlane (meshNumber, ...vertices) {
-    if (vertices.length !== 4) {
-      return
-    }
-
-    let geometry = this.meshes[meshNumber].geometry
-
-    let faces = geometry.addVertices(
-      vertices[0], vertices[1], vertices[2], vertices[3]
-    )
-
-    geometry.addFaces(
-      [faces[0], faces[1], faces[2]],
-      [faces[0], faces[2], faces[3]]
-    )
-  }
-
-  /**
-   * Funcion que inserta un triangulo a la geometria.
-   * @param {int} meshNumber numero de la malla a agregar.
-   * @param {Array} vertices Se espera que se manden exactamente 3 vertices.
-   */
-  insertTriangle (meshNumber, ...vertices) {
-    if (vertices.length !== 3) {
-      return
-    }
-
-    let geometry = this.meshes[meshNumber].geometry
-
-    let faces = geometry.addVertices(
-      vertices[0], vertices[1], vertices[2]
-    )
-
-    geometry.addFaces(
-      [faces[0], faces[1], faces[2]]
-    )
   }
 }
 

@@ -153,6 +153,10 @@ class WebGLRender {
         webGLUtil.setUniformLocation(this._gl, this.prg, 'u_MVMatrix', ModelMatrix)
         webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Color', mesh.material)
 
+        if (mesh.clearDepth) {
+          webGLUtil.clearDepth(this._gl)
+        }
+
         if (mesh.renderType === Mesh.RENDER_TYPE.TRIANGLES) {
           this.drawElementsTriangle(faces)
         } else if (mesh.renderType === Mesh.RENDER_TYPE.LINE_LOOP) {

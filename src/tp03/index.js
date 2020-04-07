@@ -5,29 +5,43 @@ const Mesh = require('./Objects/Mesh')
 const PerspectiveCamera = require('./Camera/PerspectiveCamera')
 const Grid = require('./Objects/GridFloor')
 const Cube = require('./Objects/Cube')
-const util = require('./Utils')
+const Cone = require('./Objects/Cone')
 const dat = require('dat.gui')
 
 console.log('tp03')
-const objects = {
-  wireframe: false,
-  change_color: true,
-  f_change_color: function () {
-    objects.change_color = !objects.change_color
-  },
-}
-
 const cameraConf = {
   fov: 45,
-  eye: [0, 2.0, 5.0],
+  eye: [2.0, 5.0, 10.0],
   center: [0, 0, 0],
   rotateY: 0
+}
+
+const cubeConf = {
+  pos: [3, 0, 0],
+  scale: [1, 1, 1],
+  rotation: [0, 0, 0],
+  isWireframe: false
+}
+
+const coneConf = {
+  pos: [0, -1.0, 0],
+  scale: [1, 1, 1],
+  rotation: [0, 0, 0],
+  isWireframe: false
+}
+
+const mouseConf = {
+  isDragging: false,
+  sensitivityX: 0.4,
+  sensitivityY: 0.05,
+  lastPos: [-1, -1]
 }
 
 let wegGLRender
 let scene = new Scene()
 let camera
 let cube
+let cone
 
 function init (canvasName) {
   initGUI()
@@ -44,16 +58,50 @@ function init (canvasName) {
   scene.addObjects(grid)
 
   // Creacion de los ejes
-  let axes = new Axes(10, [true, true, true])
+  let axes = new Axes(10)
   scene.addObjects(axes)
 
   // Creacion de un cubo.
   cube = new Cube(2)
   scene.addObjects(cube)
 
-  canvas.addEventListener('mousemove', event => {
-    cameraConf.rotateY = util.map(event.clientX, 0, canvas.clientWidth, 0, 360)
+  // Linkeando los valores del cubo
+  cube.meshes[0].t = cubeConf.pos
+  cube.meshes[0].s = cubeConf.scale
+  cube.meshes[0].r = cubeConf.rotation
+
+  // Creacion de un cono.
+  cone = new Cone(16, 1, 2)
+  scene.addObjects(cone)
+
+  // Linkeando los valores del cono
+  cone.meshes[0].t = coneConf.pos
+  cone.meshes[0].s = coneConf.scale
+  cone.meshes[0].r = coneConf.rotation
+
+  canvas.addEventListener('mousedown', event => {
+    mouseConf.isDragging = true
+    mouseConf.lastPos = [event.clientX, event.clientY]
   })
+  canvas.addEventListener('mousemove', event => {
+    if (!mouseConf.isDragging) {
+      return
+    }
+
+    let aspect = canvas.clientWidth / canvas.clientHeight
+
+    let auxX = event.clientX
+    let auxY = event.clientY
+
+    cameraConf.rotateY += (mouseConf.lastPos[0] - auxX) * mouseConf.sensitivityX
+    cameraConf.eye[1] += (auxY - mouseConf.lastPos[1]) * mouseConf.sensitivityY * aspect
+
+    mouseConf.lastPos = [auxX, auxY]
+  })
+  canvas.addEventListener('mouseup', event => {
+    mouseConf.isDragging = false
+  })
+
   requestAnimationFrame(renderLoop)
 }
 
@@ -63,7 +111,7 @@ function renderLoop () {
   wegGLRender.render(scene, camera)
 
   // Cubo
-  if (objects.wireframe) {
+  if (cubeConf.isWireframe) {
     cube.meshes[0].renderType = Mesh.RENDER_TYPE.LINE_LOOP
   } else {
     cube.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
@@ -72,16 +120,26 @@ function renderLoop () {
   // Configuracion de la camara
   camera.setFovFromDegrees(cameraConf.fov)
   camera.rotate[1] = cameraConf.rotateY
-  objects.change_color = false
 
   requestAnimationFrame(renderLoop)
 }
 
 function initGUI () {
   let gui = new dat.GUI()
-  let object = gui.addFolder('Objetos')
-  object.add(objects, 'wireframe')
-  object.add(objects, 'f_change_color',)
+  let object = gui.addFolder('Objects')
+  let cubeGUI = object.addFolder('Cube')
+  let position = cubeGUI.addFolder('Position')
+  position.add(cubeConf.pos, 0, -10, 10).name('X')
+  position.add(cubeConf.pos, 1, -10, 10).name('Y')
+  position.add(cubeConf.pos, 2, -10, 10).name('Z')
+  let scale = cubeGUI.addFolder('Scale')
+  scale.add(cubeConf.scale, 0, -10, 10).name('X')
+  scale.add(cubeConf.scale, 1, -10, 10).name('Y')
+  scale.add(cubeConf.scale, 2, -10, 10).name('Z')
+  let rotate = cubeGUI.addFolder('Rotate')
+  rotate.add(cubeConf.rotation, 0, 0, 360).name('X')
+  rotate.add(cubeConf.rotation, 1, 0, 360).name('Y')
+  rotate.add(cubeConf.rotation, 2, 0, 360).name('Z')
 
   let camera = gui.addFolder('Camera')
   camera.add(cameraConf, 'fov', 0, 90)

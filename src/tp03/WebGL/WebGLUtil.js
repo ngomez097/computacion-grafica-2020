@@ -3,6 +3,10 @@ const paintBackground = function (gl, clearColor) {
   gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }
 
+const clearDepth = function (gl) {
+  gl.clear(gl.DEPTH_BUFFER_BIT)
+}
+
 const resizeCanvas = function (gl) {
   let canvas = gl.canvas
   let displayWidth = Math.floor(canvas.clientWidth)
@@ -53,5 +57,6 @@ module.exports = {
   paintBackground,
   resizeCanvas,
   setUniformLocation,
-  bindAttributeArrayFloat
+  bindAttributeArrayFloat,
+  clearDepth
 }

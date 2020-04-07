@@ -5,11 +5,13 @@ const ObjectScene = require('./ObjectScene')
 class Axes extends ObjectScene {
   constructor (
     size = 1,
-    show_axe = [true, true, true]
+    show_axe = [true, true, true],
+    inFront = true
   ) {
     super()
     let eje
     let mesh
+    this.meshes.slice(0, 1)
 
     if (show_axe[0]) {
       eje = new Geometry()
@@ -22,6 +24,7 @@ class Axes extends ObjectScene {
       mesh = new Mesh(eje)
       mesh.material = [1.0, 0.4, 0.4]
       mesh.renderType = Mesh.RENDER_TYPE.LINES
+      mesh.clearDepth = inFront
       this.meshes.push(mesh)
     }
 
@@ -36,6 +39,7 @@ class Axes extends ObjectScene {
       mesh = new Mesh(eje)
       mesh.material = [0.4, 1.0, 0.4]
       mesh.renderType = Mesh.RENDER_TYPE.LINES
+      mesh.clearDepth = inFront
       this.meshes.push(mesh)
     }
 
@@ -50,6 +54,7 @@ class Axes extends ObjectScene {
 
       mesh.material = [0.4, 0.4, 1.0]
       mesh.renderType = Mesh.RENDER_TYPE.LINES
+      mesh.clearDepth = inFront
       this.meshes.push(mesh)
     }
   }
