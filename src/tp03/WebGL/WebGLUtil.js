@@ -25,8 +25,9 @@ const setUniformLocation = function (gl, prg, attr, value) {
   const atribute = gl.getUniformLocation(prg, attr)
   if (typeof value === 'number') {
     gl.uniform1f(atribute, value)
-  }
-  if (typeof value === 'object') {
+  } else if (typeof value === 'boolean') {
+    gl.uniform1i(atribute, value)
+  } else if (typeof value === 'object') {
     if (value.length === 3) {
       gl.uniform3fv(atribute, value)
     }

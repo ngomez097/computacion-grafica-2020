@@ -80,6 +80,19 @@ class WebGLRender {
     this._gl.bindBuffer(this._gl.ARRAY_BUFFER, null)
   }
 
+  setNormal3D (normalArray) {
+    this.vertex_buffer = this._gl.createBuffer()
+    this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this.vertex_buffer)
+
+    this._gl.bufferData(this._gl.ARRAY_BUFFER,
+      new Float32Array(normalArray),
+      this._gl.STATIC_DRAW)
+
+    webGLUtil.bindAttributeArrayFloat(this._gl, this.prg, 'a_VertexNormal', 3)
+    // Desvinculacion del buffer
+    this._gl.bindBuffer(this._gl.ARRAY_BUFFER, null)
+  }
+
   /** Funcion que recibe un arraglo de indices 2D int
    * y los establece en el buffer
    */
@@ -126,6 +139,10 @@ class WebGLRender {
       camera.aspect = this._gl.canvas.clientWidth / this._gl.canvas.clientHeight
     }
 
+    let ModelMatrix
+    let vertices
+    let faces
+    let normals
     // Se establece la matriz de proyeccion
     let PMatrix = camera.getProjectionMatrix()
     webGLUtil.setUniformLocation(this._gl, this.prg, 'u_PMatrix', PMatrix)
@@ -137,21 +154,25 @@ class WebGLRender {
     // Dibujar los objetos
     for (let object of scene.objects) {
       for (let mesh of object.meshes) {
-        let vertices = mesh.geometry.vertices
-        let faces = mesh.geometry.faces
+        vertices = mesh.geometry.vertices
+        faces = mesh.geometry.faces
+        normals = mesh.geometry.normals
 
         if (mesh.geometry.type === Geometry.TYPE['2D']) {
           this.setVertexBuffer2D(vertices)
         } else {
           this.setVertexBuffer3D(vertices)
+          this.setNormal3D(normals)
         }
 
         this.setIndexBuffer(faces)
 
-        let ModelMatrix = mesh.getModelMatrix()
+        ModelMatrix = mesh.getModelMatrix()
 
         webGLUtil.setUniformLocation(this._gl, this.prg, 'u_MVMatrix', ModelMatrix)
+        webGLUtil.setUniformLocation(this._gl, this.prg, 'f_MVMatrix', ModelMatrix)
         webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Color', mesh.material)
+        webGLUtil.setUniformLocation(this._gl, this.prg, 'f_UseNormal', mesh.useNormal)
 
         if (mesh.clearDepth) {
           webGLUtil.clearDepth(this._gl)

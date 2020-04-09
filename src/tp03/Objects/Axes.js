@@ -15,45 +15,48 @@ class Axes extends ObjectScene {
 
     if (show_axe[0]) {
       eje = new Geometry()
-      eje.addVertices(
+      eje.addVertices([
         [0.0, 0.0, 0.0],
         [size, 0.0, 0.0]
-      )
+      ])
       eje.addFaces([0, 1])
 
       mesh = new Mesh(eje)
       mesh.material = [1.0, 0.4, 0.4]
       mesh.renderType = Mesh.RENDER_TYPE.LINES
+      mesh.useNormal = false
       mesh.clearDepth = inFront
       this.meshes.push(mesh)
     }
 
     if (show_axe[1]) {
       eje = new Geometry()
-      eje.addVertices(
+      eje.addVertices([
         [0.0, 0.0, 0.0],
         [0.0, size, 0.0]
-      )
+      ])
       eje.addFaces([0, 1])
 
       mesh = new Mesh(eje)
       mesh.material = [0.4, 1.0, 0.4]
       mesh.renderType = Mesh.RENDER_TYPE.LINES
+      mesh.useNormal = false
       mesh.clearDepth = inFront
       this.meshes.push(mesh)
     }
 
     if (show_axe[2]) {
       eje = new Geometry()
-      eje.addVertices(
+      eje.addVertices([
         [0.0, 0.0, 0.0],
         [0.0, 0.0, size]
-      )
+      ])
       eje.addFaces([0, 1])
       mesh = new Mesh(eje)
 
       mesh.material = [0.4, 0.4, 1.0]
       mesh.renderType = Mesh.RENDER_TYPE.LINES
+      mesh.useNormal = false
       mesh.clearDepth = inFront
       this.meshes.push(mesh)
     }

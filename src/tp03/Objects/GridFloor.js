@@ -5,8 +5,9 @@ class GridFloor extends ObjectScene {
   constructor (size = 10) {
     super()
     this.size = size
-    this.gap = 1
+    this.gap = 1.0
     this.meshes[0].renderType = Mesh.RENDER_TYPE.LINES
+    this.meshes[0].useNormal = false
     this.calculateGrid()
   }
 
@@ -16,19 +17,19 @@ class GridFloor extends ObjectScene {
     let index
     // Paralelas a X
     for (let z = -offset; z <= offset; z += this.gap) {
-      index = geometry.addVertices(
+      index = geometry.addVertices([
         [-offset, 0, z],
         [offset, 0, z]
-      )
+      ])
       geometry.addFaces([index[0], index[1]])
     }
 
     // Paralelas a Z
     for (let x = -offset; x <= offset; x += this.gap) {
-      index = geometry.addVertices(
+      index = geometry.addVertices([
         [x, 0, -offset],
         [x, 0, offset]
-      )
+      ])
       geometry.addFaces([index[0], index[1]])
     }
   }

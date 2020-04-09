@@ -1,4 +1,5 @@
 const mat4 = require('gl-matrix/mat4')
+const vec3 = require('../Utils/vec3')
 
 class Mesh {
   constructor (geometry, material = [1.0, 1.0, 1.0], renderType = Mesh.RENDER_TYPE.TRIANGLES) {
@@ -10,6 +11,7 @@ class Mesh {
     this.modelMatrix = null
     this.renderType = renderType
     this.clearDepth = false
+    this.useNormal = true
   }
 
   static get RENDER_TYPE () {
@@ -40,53 +42,75 @@ class Mesh {
 
   /**
    * Funcion que inserta un triangulo a la geometria.
-   * @param {int} meshNumber numero de la malla a agregar.
-   * @param {Array} vertices Se espera que se manden exactamente 3 vertices.
+   * @param {Array} vertices: Se espera que se manden exactamente 3 vertices.
+   * @param {Boolean} duplicated: si se duplica el vertice.
+   * @param {Boolean} flipNormal: si se dibuja la normal alrevez.
    */
-  insertTriangle (...vertices) {
+  insertTriangle (vertices, duplicated = false, flipNormal = false) {
     if (vertices.length !== 3) {
       return
     }
+    let normal
 
-    let faces = this.geometry.addVertices(
-      vertices[0], vertices[1], vertices[2]
-    )
+    let index = this.geometry.addVertices(vertices, duplicated)
 
     this.geometry.addFaces(
-      [faces[0], faces[1], faces[2]]
+      [index[0], index[1], index[2]]
+    )
+
+    if (flipNormal) {
+      normal = vec3.normals(vertices[0], vertices[2], vertices[1])
+    } else {
+      normal = vec3.normals(vertices[0], vertices[1], vertices[2])
+    }
+
+    this.geometry.setNormal(
+      [index[0], index[1], index[2]],
+      normal
     )
   }
 
   /**
    * Funcion que inserta un plano a la geometria.
-   * @param {int} meshNumber numero de la malla a agregar.
    * @param {Array} vertices Se espera que se manden exactamente 4 vertices.
+   * @param {Boolean} duplicated: si se duplica el vertice.
+   * @param {Boolean} flipNormal: si se dibuja la normal alrevez.
    */
-  insertPlane (...vertices) {
+  insertPlane (vertices, duplicated = false, flipNormal = false) {
     if (vertices.length !== 4) {
       return
     }
-
-    let faces = this.geometry.addVertices(
-      vertices[0], vertices[1], vertices[2], vertices[3]
-    )
+    let normal
+    let index = this.geometry.addVertices(vertices, duplicated)
 
     this.geometry.addFaces(
-      [faces[0], faces[1], faces[2]],
-      [faces[0], faces[2], faces[3]]
+      [index[0], index[1], index[2]],
+      [index[0], index[2], index[3]]
+    )
+
+    if (flipNormal) {
+      normal = vec3.normals(vertices[0], vertices[2], vertices[1])
+    } else {
+      normal = vec3.normals(vertices[0], vertices[1], vertices[2])
+    }
+
+    this.geometry.setNormal(
+      [index[0], index[1], index[2], index[3]],
+      normal
     )
   }
 
   /**
    * Funcion para insertar una cara con mas de 5 vertices, combierte la cara en triangulos
    * @param {Array<Array>} vertices Es un arreglo de vertices.
+   * @param {Boolean} duplicated: si se duplica el vertice.
+   * @param {Boolean} flipNormal: si se dibuja la normal alrevez.
    */
-  insertNGon (vertices) {
+  insertNGon (vertices, duplicated = false, flipNormal = false) {
     if (vertices.length < 5) {
       return
     }
 
-    let index = []
     let innerIndex = [0]
     let isPair = vertices.length % 2 === 0
     let count = Math.floor(vertices.length / 2)
@@ -95,41 +119,37 @@ class Mesh {
       count -= 1
     }
 
-    for (let vertice of vertices) {
-      index.push(this.geometry.addVertices(vertice))
-    }
-
     for (let i = 0; i < count; i++) {
-      this.insertTriangle(
+      this.insertTriangle([
         vertices[i * 2], vertices[i * 2 + 1], vertices[i * 2 + 2]
-      )
+      ], duplicated, flipNormal)
       innerIndex.push(i * 2 + 2)
     }
     if (isPair) {
-      this.insertTriangle(
+      this.insertTriangle([
         vertices[count * 2], vertices[count * 2 + 1], vertices[0]
-      )
+      ], duplicated, flipNormal)
     }
 
     if (innerIndex.length === 3) {
-      this.insertTriangle(
+      this.insertTriangle([
         vertices[innerIndex[0]],
         vertices[innerIndex[1]],
         vertices[innerIndex[2]]
-      )
+      ], false, flipNormal)
     } else if (innerIndex.length === 4) {
-      this.insertPlane(
+      this.insertPlane([
         vertices[innerIndex[0]],
         vertices[innerIndex[1]],
         vertices[innerIndex[2]],
         vertices[innerIndex[3]]
-      )
+      ], false, flipNormal)
     } else {
       let auxVertices = []
       for (let i of innerIndex) {
         auxVertices.push(vertices[i])
       }
-      this.insertNGon(auxVertices)
+      this.insertNGon(auxVertices, false, flipNormal)
     }
   }
 }

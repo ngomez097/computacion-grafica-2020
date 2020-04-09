@@ -6,6 +6,7 @@ const PerspectiveCamera = require('./Camera/PerspectiveCamera')
 const Grid = require('./Objects/GridFloor')
 const Cube = require('./Objects/Cube')
 const Cone = require('./Objects/Cone')
+const Cylinder = require('./Objects/Cylinder')
 const dat = require('dat.gui')
 
 console.log('tp03')
@@ -24,6 +25,13 @@ const cubeConf = {
 }
 
 const coneConf = {
+  pos: [-3, -1.0, 0],
+  scale: [1, 1, 1],
+  rotation: [0, 0, 0],
+  isWireframe: false
+}
+
+const cylinderConf = {
   pos: [0, -1.0, 0],
   scale: [1, 1, 1],
   rotation: [0, 0, 0],
@@ -42,6 +50,7 @@ let scene = new Scene()
 let camera
 let cube
 let cone
+let cylinder
 
 function init (canvasName) {
   initGUI()
@@ -71,13 +80,22 @@ function init (canvasName) {
   cube.meshes[0].r = cubeConf.rotation
 
   // Creacion de un cono.
-  cone = new Cone(16, 1, 2)
+  cone = new Cone(8, 1, 2)
   scene.addObjects(cone)
 
   // Linkeando los valores del cono
   cone.meshes[0].t = coneConf.pos
   cone.meshes[0].s = coneConf.scale
   cone.meshes[0].r = coneConf.rotation
+
+  // Creacion de un cilindro.
+  cylinder = new Cylinder(16, 1, 2)
+  scene.addObjects(cylinder)
+
+  // Linkeando los valores del cilindro
+  cylinder.meshes[0].t = cylinderConf.pos
+  cylinder.meshes[0].s = cylinderConf.scale
+  cylinder.meshes[0].r = cylinderConf.rotation
 
   canvas.addEventListener('mousedown', event => {
     mouseConf.isDragging = true
@@ -117,6 +135,18 @@ function renderLoop () {
     cube.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
   }
 
+  if (coneConf.isWireframe) {
+    cone.meshes[0].renderType = Mesh.RENDER_TYPE.LINE_LOOP
+  } else {
+    cone.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
+  }
+
+  if (cylinderConf.isWireframe) {
+    cylinder.meshes[0].renderType = Mesh.RENDER_TYPE.LINE_LOOP
+  } else {
+    cylinder.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
+  }
+
   // Configuracion de la camara
   camera.setFovFromDegrees(cameraConf.fov)
   camera.rotate[1] = cameraConf.rotateY
@@ -126,8 +156,11 @@ function renderLoop () {
 
 function initGUI () {
   let gui = new dat.GUI()
+  // Objectos
   let object = gui.addFolder('Objects')
+  // Cubo
   let cubeGUI = object.addFolder('Cube')
+  cubeGUI.add(cubeConf, 'isWireframe')
   let position = cubeGUI.addFolder('Position')
   position.add(cubeConf.pos, 0, -10, 10).name('X')
   position.add(cubeConf.pos, 1, -10, 10).name('Y')
@@ -140,6 +173,38 @@ function initGUI () {
   rotate.add(cubeConf.rotation, 0, 0, 360).name('X')
   rotate.add(cubeConf.rotation, 1, 0, 360).name('Y')
   rotate.add(cubeConf.rotation, 2, 0, 360).name('Z')
+
+  // Cono
+  let coneGUI = object.addFolder('Cone')
+  coneGUI.add(coneConf, 'isWireframe')
+  position = coneGUI.addFolder('Position')
+  position.add(coneConf.pos, 0, -10, 10).name('X')
+  position.add(coneConf.pos, 1, -10, 10).name('Y')
+  position.add(coneConf.pos, 2, -10, 10).name('Z')
+  scale = coneGUI.addFolder('Scale')
+  scale.add(coneConf.scale, 0, -10, 10).name('X')
+  scale.add(coneConf.scale, 1, -10, 10).name('Y')
+  scale.add(coneConf.scale, 2, -10, 10).name('Z')
+  rotate = coneGUI.addFolder('Rotate')
+  rotate.add(coneConf.rotation, 0, 0, 360).name('X')
+  rotate.add(coneConf.rotation, 1, 0, 360).name('Y')
+  rotate.add(coneConf.rotation, 2, 0, 360).name('Z')
+
+  // Cilindro
+  let cylinderGUI = object.addFolder('Cylinder')
+  cylinderGUI.add(cylinderConf, 'isWireframe')
+  position = cylinderGUI.addFolder('Position')
+  position.add(cylinderConf.pos, 0, -10, 10).name('X')
+  position.add(cylinderConf.pos, 1, -10, 10).name('Y')
+  position.add(cylinderConf.pos, 2, -10, 10).name('Z')
+  scale = cylinderGUI.addFolder('Scale')
+  scale.add(cylinderConf.scale, 0, -10, 10).name('X')
+  scale.add(cylinderConf.scale, 1, -10, 10).name('Y')
+  scale.add(cylinderConf.scale, 2, -10, 10).name('Z')
+  rotate = cylinderGUI.addFolder('Rotate')
+  rotate.add(cylinderConf.rotation, 0, 0, 360).name('X')
+  rotate.add(cylinderConf.rotation, 1, 0, 360).name('Y')
+  rotate.add(cylinderConf.rotation, 2, 0, 360).name('Z')
 
   let camera = gui.addFolder('Camera')
   camera.add(cameraConf, 'fov', 0, 90)
