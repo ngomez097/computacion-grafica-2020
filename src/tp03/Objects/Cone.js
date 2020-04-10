@@ -5,18 +5,19 @@ class Cone extends ObjectScene {
     baseVertexCount = 3,
     radius = 1,
     heigth = 1,
-    shadeFlat = true
+    shadeSmooth = false
   ) {
     super()
     this.baseVertexCount = baseVertexCount
     this.radius = radius
     this.heigth = heigth
-    this.shadeFlat = shadeFlat
+    this.shadeSmooth = shadeSmooth
     this.constructCone()
   }
 
   constructCone () {
     let mesh = this.meshes[0]
+    mesh.geometry.clearData()
     let topVertex = [0, this.heigth, 0]
     let v1 = []
     let v2 = []
@@ -32,7 +33,7 @@ class Cone extends ObjectScene {
 
       mesh.insertTriangle([
         topVertex, v2, v1
-      ], this.shadeFlat)
+      ], !this.shadeSmooth)
 
       botommVertex.push(v2)
     }

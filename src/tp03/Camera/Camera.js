@@ -18,7 +18,9 @@ class Camera {
   getViewMatrix () {
     this.viewMatrix = mat4.create()
     mat4.lookAt(this.viewMatrix, this.eye, this.center, this.up)
+    mat4.rotateX(this.viewMatrix, this.viewMatrix, -this.rotate[0] * Math.PI / 180.0)
     mat4.rotateY(this.viewMatrix, this.viewMatrix, -this.rotate[1] * Math.PI / 180.0)
+    mat4.rotateZ(this.viewMatrix, this.viewMatrix, -this.rotate[2] * Math.PI / 180.0)
     return this.viewMatrix
   }
 

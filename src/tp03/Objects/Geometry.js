@@ -137,6 +137,12 @@ class Geometry {
 
     return true
   }
+
+  clearData () {
+    this.vertices = []
+    this.faces = []
+    this.normals = []
+  }
 }
 
 module.exports = Geometry

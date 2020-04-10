@@ -5,18 +5,19 @@ class Cylinder extends ObjectScene {
     segments = 3,
     radius = 1,
     heigth = 1,
-    shadeFlat = true
+    shadeSmooth = true
   ) {
     super()
     this.segments = segments
     this.radius = radius
     this.heigth = heigth
-    this.shadeFlat = shadeFlat
+    this.shadeSmooth = shadeSmooth
     this.constructCylinder()
   }
 
   constructCylinder () {
     let mesh = this.meshes[0]
+    mesh.geometry.clearData()
     let dt = 2 * Math.PI / this.segments
     let angle
     let xz1, xz2
@@ -33,7 +34,7 @@ class Cylinder extends ObjectScene {
         [xz2[0], this.heigth, xz2[1]],
         [xz2[0], 0, xz2[1]],
         [xz1[0], 0, xz1[1]]
-      ], this.shadeFlat)
+      ], !this.shadeSmooth)
       topVertex.push([xz2[0], this.heigth, xz2[1]])
       botommVertex.push([xz2[0], 0, xz2[1]])
     }
@@ -49,7 +50,6 @@ class Cylinder extends ObjectScene {
         break
 
       case 4:
-        console.log('Plano')
         mesh.insertPlane([
           botommVertex[0], botommVertex[1], botommVertex[2], botommVertex[3]
         ], true)

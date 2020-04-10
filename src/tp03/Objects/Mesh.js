@@ -32,10 +32,10 @@ class Mesh {
   getModelMatrix () {
     this.modelMatrix = mat4.create()
     mat4.translate(this.modelMatrix, this.modelMatrix, this.t)
-    mat4.scale(this.modelMatrix, this.modelMatrix, this.s)
     mat4.rotateX(this.modelMatrix, this.modelMatrix, this.r[0] * Math.PI / 180.0)
     mat4.rotateY(this.modelMatrix, this.modelMatrix, this.r[1] * Math.PI / 180.0)
     mat4.rotateZ(this.modelMatrix, this.modelMatrix, this.r[2] * Math.PI / 180.0)
+    mat4.scale(this.modelMatrix, this.modelMatrix, this.s)
 
     return this.modelMatrix
   }
@@ -54,13 +54,15 @@ class Mesh {
 
     let index = this.geometry.addVertices(vertices, duplicated)
 
-    this.geometry.addFaces(
-      [index[0], index[1], index[2]]
-    )
-
     if (flipNormal) {
+      this.geometry.addFaces(
+        [index[0], index[2], index[1]]
+      )
       normal = vec3.normals(vertices[0], vertices[2], vertices[1])
     } else {
+      this.geometry.addFaces(
+        [index[0], index[1], index[2]]
+      )
       normal = vec3.normals(vertices[0], vertices[1], vertices[2])
     }
 
@@ -83,14 +85,17 @@ class Mesh {
     let normal
     let index = this.geometry.addVertices(vertices, duplicated)
 
-    this.geometry.addFaces(
-      [index[0], index[1], index[2]],
-      [index[0], index[2], index[3]]
-    )
-
     if (flipNormal) {
+      this.geometry.addFaces(
+        [index[0], index[2], index[1]],
+        [index[0], index[3], index[2]]
+      )
       normal = vec3.normals(vertices[0], vertices[2], vertices[1])
     } else {
+      this.geometry.addFaces(
+        [index[0], index[1], index[2]],
+        [index[0], index[2], index[3]]
+      )
       normal = vec3.normals(vertices[0], vertices[1], vertices[2])
     }
 

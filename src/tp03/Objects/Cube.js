@@ -39,8 +39,6 @@ class Cube extends ObjectScene {
         [fixedPosition, offset, -offset]
       ], true, y)
     }
-
-    console.log(mesh.geometry)
   }
 }
 

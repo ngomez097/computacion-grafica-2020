@@ -41,6 +41,8 @@ class WebGLRender {
 
     this._gl.useProgram(this.prg)
     this._gl.enable(this._gl.DEPTH_TEST)
+    this._gl.enable(this._gl.CULL_FACE)
+    this._gl.cullFace(this._gl.BACK)
   }
 
   initShader (pathShader, type) {
@@ -48,6 +50,14 @@ class WebGLRender {
     let shader = this._gl.createShader(type)
     this._gl.shaderSource(shader, source)
     this._gl.compileShader(shader)
+
+    let message = this._gl.getShaderInfoLog(shader)
+
+    if (message.length > 0) {
+      /* message may be an error or a warning */
+      console.error(message)
+    }
+
     this._gl.attachShader(this.prg, shader)
   }
 
@@ -150,6 +160,7 @@ class WebGLRender {
     // Se establece las propiedades de la camara
     let VMatrix = camera.getViewMatrix()
     webGLUtil.setUniformLocation(this._gl, this.prg, 'u_VMatrix', VMatrix)
+    webGLUtil.setUniformLocation(this._gl, this.prg, 'f_VMatrix', VMatrix)
 
     // Dibujar los objetos
     for (let object of scene.objects) {

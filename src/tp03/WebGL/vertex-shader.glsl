@@ -13,7 +13,7 @@ vec4 pos;
 
 
 void main(void) {
-  f_normals = a_VertexNormal;
+  f_normals = normalize(a_VertexNormal);
   f_Color = u_Color;
 
   pos = vec4(a_VertexPosition, 1.0);

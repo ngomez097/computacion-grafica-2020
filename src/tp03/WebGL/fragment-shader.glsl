@@ -13,10 +13,10 @@ vec3 fixedNormal;
 
 void main(void) {
   if (f_UseNormal == 1) {
-    fixedNormal = normalize(f_normals);
-    fixedNormal.x = (fixedNormal.x + 1.0) / 2.0;
-    fixedNormal.y = (fixedNormal.y + 1.0) / 2.0;
-    fixedNormal.z = (fixedNormal.z + 1.0) / 2.0;
+    fixedNormal = (f_MVMatrix * vec4(f_normals, 0.0)).xyz;
+    fixedNormal = normalize(fixedNormal);
+    fixedNormal = (fixedNormal + 1.0) / 2.0;
+
     gl_FragColor = vec4(fixedNormal, 1.0);
   } else {
     gl_FragColor = vec4(f_Color, 1.0);
