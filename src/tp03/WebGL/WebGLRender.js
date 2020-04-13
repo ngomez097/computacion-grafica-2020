@@ -186,7 +186,8 @@ class WebGLRender {
         webGLUtil.setUniformLocation(this._gl, this.prg, 'f_UseNormal', mesh.useNormal)
 
         if (mesh.clearDepth) {
-          webGLUtil.clearDepth(this._gl)
+          //webGLUtil.clearDepth(this._gl)
+          this._gl.disable(this._gl.DEPTH_TEST)
         }
 
         if (mesh.renderType === Mesh.RENDER_TYPE.TRIANGLES) {
@@ -195,6 +196,10 @@ class WebGLRender {
           this.drawElementsLineLoop(faces)
         } else {
           this.drawElementsLines(faces)
+        }
+        if (mesh.clearDepth) {
+          //webGLUtil.clearDepth(this._gl)
+          this._gl.enable(this._gl.DEPTH_TEST)
         }
       }
     }

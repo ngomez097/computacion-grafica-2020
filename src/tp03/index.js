@@ -16,8 +16,14 @@ const cameraConf = {
   fov: 45,
   eye: [0.0, 5.0, 10.0],
   center: [0, 0, 0],
-  rotation: [0, 0, 0],
+  rpy: [0, -30, -90],
   useOrthographicCamera: false
+}
+
+const mouseConf = {
+  isDragging: false,
+  sensitivityX: 0.10,
+  sensitivityY: 0.10,
 }
 
 const cubeConf = {
@@ -56,13 +62,6 @@ const sphereConf = {
   isWireframe: false
 }
 
-const mouseConf = {
-  isDragging: false,
-  sensitivityX: 0.4,
-  sensitivityY: 0.2,
-  lastPos: [-1, -1]
-}
-
 let wegGLRender
 let scene = new Scene()
 let camera
@@ -81,7 +80,7 @@ function init (canvasName) {
   // Linkeando los valores de la camara.
   camera.eye = cameraConf.eye
   camera.center = cameraConf.center
-  camera.rotate = cameraConf.rotation
+  camera.rpy = cameraConf.rpy
 
   // Creacion de la grilla
   let grid = new Grid(20)
@@ -127,28 +126,38 @@ function init (canvasName) {
   sphere.meshes[0].s = sphereConf.scale
   sphere.meshes[0].r = sphereConf.rotation
 
-  canvas.addEventListener('mousedown', event => {
-    mouseConf.isDragging = true
-    mouseConf.lastPos = [event.clientX, event.clientY]
-  })
-  canvas.addEventListener('mousemove', event => {
-    if (!mouseConf.isDragging) {
-      return
+  canvas.requestPointerLock = canvas.requestPointerLock ||
+                            canvas.mozRequestPointerLock
+
+  canvas.requestPointerLock()
+
+  document.addEventListener('pointerlockchange', e => {
+    if (document.pointerLockElement !== canvas) {
+      console.log('Sis')
+      canvas.onmousemove = null
     }
-
-    let aspect = canvas.clientWidth / canvas.clientHeight
-
-    let auxX = event.clientX
-    let auxY = event.clientY
-
-    cameraConf.rotation[1] += (mouseConf.lastPos[0] - auxX) * mouseConf.sensitivityX
-    cameraConf.rotation[0] += (mouseConf.lastPos[1] - auxY) * mouseConf.sensitivityY * aspect
-
-    mouseConf.lastPos = [auxX, auxY]
   })
-  canvas.addEventListener('mouseup', event => {
-    mouseConf.isDragging = false
-  })
+
+  canvas.onclick = function (event) {
+    mouseConf.isDragging = true
+    canvas.requestPointerLock()
+    canvas.onmousemove = function (event) {
+      let aspect = canvas.clientWidth / canvas.clientHeight
+
+      let auxX = event.movementX
+      let auxY = event.movementY
+
+      cameraConf.rpy[2] += auxX * mouseConf.sensitivityX
+      cameraConf.rpy[1] -= auxY * mouseConf.sensitivityY * aspect
+
+      if (cameraConf.rpy[1] > 89.0) {
+        cameraConf.rpy[1] = 89.0
+      }
+      if (cameraConf.rpy[1] < -89.0) {
+        cameraConf.rpy[1] = -89.0
+      }
+    }
+  }
 
   requestAnimationFrame(renderLoop)
 }
@@ -211,14 +220,14 @@ function renderLoop () {
     // Linkeando los valores de la camara.
     camera.eye = cameraConf.eye
     camera.center = cameraConf.center
-    camera.rotate = cameraConf.rotation
+    camera.rotate = cameraConf.rpy
   } else if (!cameraConf.useOrthographicCamera && camera instanceof OrthographicCamera) {
     camera = new PerspectiveCamera(cameraConf.fov, canvas.clientWidth / canvas.clientHeight)
 
     // Linkeando los valores de la camara.
     camera.eye = cameraConf.eye
     camera.center = cameraConf.center
-    camera.rotate = cameraConf.rotation
+    camera.rotate = cameraConf.rpy
   }
 
   // Configuracion de la camara
@@ -312,9 +321,9 @@ function initGUI () {
   cameraPosition.add(cameraConf.eye, 1, 0, 20).name('Y')
   cameraPosition.add(cameraConf.eye, 2, 0, 20).name('Z')
   rotate = camera.addFolder('Rotate')
-  rotate.add(cameraConf.rotation, 0, 0, 360).name('X')
-  rotate.add(cameraConf.rotation, 1, 0, 360).name('Y')
-  rotate.add(cameraConf.rotation, 2, 0, 360).name('Z')
+  rotate.add(cameraConf.rpy, 0, 0, 360).name('X')
+  rotate.add(cameraConf.rpy, 1, 0, 360).name('Y')
+  rotate.add(cameraConf.rpy, 2, 0, 360).name('Z')
   let cameraRotation = camera.addFolder('Look At')
   cameraRotation.add(cameraConf.center, 0, 0, 10).name('X')
   cameraRotation.add(cameraConf.center, 1, 0, 10).name('Y')
