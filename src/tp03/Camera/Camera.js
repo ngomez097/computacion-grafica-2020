@@ -1,41 +1,74 @@
 const mat4 = require('gl-matrix/mat4')
 const vec3 = require('gl-matrix/vec3')
+const LocalAxis = require('../Axis/LocalAxis')
 
-class Camera {
+class Camera extends LocalAxis {
   constructor (
     eye = [5, 5, 5],
     center = [0, 0, 0],
     up = [0, 1, 0],
-    rpy = [0, 0, 0]
+    rotationY = 0
   ) {
-    this.viewMatrix = null
-    this.projectionMatrix = null
+    super()
+    this.viewMatrix = mat4.identity([])
+    this.projectionMatrix = mat4.identity([])
     this.eye = eye
     this.center = center
     this.up = up
-    // Roll, Pitch, Yaw
-    this.rpy = rpy
+    this.rotateY = rotationY
+    this.useLookAt = false
   }
 
   getViewMatrix () {
     this.viewMatrix = mat4.create()
-    let direction = []
-    let aux = []
-    direction[0] = Math.cos(this.radians(this.rpy[2])) * Math.cos(this.radians(this.rpy[1]))
-    direction[1] = Math.sin(this.radians(this.rpy[1]))
-    direction[2] = Math.sin(this.radians(this.rpy[2])) * Math.cos(this.radians(this.rpy[1]))
-    vec3.normalize(direction, direction)
-    vec3.add(aux, this.eye, direction)
-    mat4.lookAt(this.viewMatrix, this.eye, aux, this.up)
+    if (this.useLookAt) {
+      mat4.lookAt(this.viewMatrix, this.eye, this.center, this.up)
+    } else {
+      mat4.translate(this.viewMatrix, this.viewMatrix, this.eye)
+      mat4.multiply(this.viewMatrix, this.viewMatrix, this.localAxis)
+      mat4.invert(this.viewMatrix, this.viewMatrix)
+    }
     return this.viewMatrix
+  }
+
+  addRoll (angle) {
+    this.rotateLocal(angle, LocalAxis.LOCAL_AXE.Z)
+  }
+
+  addPitch (angle) {
+    this.rot = this.rotateLocal(angle, LocalAxis.LOCAL_AXE.X)
+  }
+
+  addYaw (angle) {
+    this.rotateGlobal(angle, LocalAxis.LOCAL_AXE.Y)
+  }
+
+  moveForward (velocity = 0.2) {
+    let moveDirection = this.getLocalAxis(LocalAxis.LOCAL_AXE.Z)
+    vec3.scale(moveDirection, moveDirection, velocity)
+    vec3.sub(this.eye, this.eye, moveDirection)
+  }
+
+  moveBackward (velocity = 0.2) {
+    let moveDirection = this.getLocalAxis(LocalAxis.LOCAL_AXE.Z)
+    vec3.scale(moveDirection, moveDirection, velocity)
+    vec3.add(this.eye, this.eye, moveDirection)
+  }
+
+  moveRight (velocity = 0.2) {
+    let moveDirection = this.getLocalAxis(LocalAxis.LOCAL_AXE.X)
+    vec3.scale(moveDirection, moveDirection, velocity)
+    vec3.add(this.eye, this.eye, moveDirection)
+  }
+
+  moveLeft (velocity = 0.2) {
+    let moveDirection = this.getLocalAxis(LocalAxis.LOCAL_AXE.X)
+    vec3.scale(moveDirection, moveDirection, velocity)
+    vec3.sub(this.eye, this.eye, moveDirection)
   }
 
   getProjectionMatrix () {
     return this.projectionMatrix
-  }
-
-  radians (angle) {
-    return angle * Math.PI / 180.0
   }
 }
 

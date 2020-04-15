@@ -1,12 +1,14 @@
 const Geometry = require('./Geometry')
 const Mesh = require('./Mesh')
+const Transformable = require('./Transformable')
 
-class ObjectScene {
+class ObjectScene extends Transformable {
   /**
    * @param {Mesh.renderType} renderType Forma en la que se dibujara.
    * @param  {...any} meshes mallas extras del objeto.
    */
   constructor (renderType = Mesh.RENDER_TYPE.TRIANGLES, ...meshes) {
+    super()
     this.meshes = []
 
     let geometry = new Geometry()

@@ -164,6 +164,7 @@ class WebGLRender {
 
     // Dibujar los objetos
     for (let object of scene.objects) {
+      ModelMatrix = object.getModelMatrix()
       for (let mesh of object.meshes) {
         vertices = mesh.geometry.vertices
         faces = mesh.geometry.faces
@@ -178,15 +179,12 @@ class WebGLRender {
 
         this.setIndexBuffer(faces)
 
-        ModelMatrix = mesh.getModelMatrix()
-
         webGLUtil.setUniformLocation(this._gl, this.prg, 'u_MVMatrix', ModelMatrix)
         webGLUtil.setUniformLocation(this._gl, this.prg, 'f_MVMatrix', ModelMatrix)
         webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Color', mesh.material)
         webGLUtil.setUniformLocation(this._gl, this.prg, 'f_UseNormal', mesh.useNormal)
 
         if (mesh.clearDepth) {
-          //webGLUtil.clearDepth(this._gl)
           this._gl.disable(this._gl.DEPTH_TEST)
         }
 
@@ -198,7 +196,6 @@ class WebGLRender {
           this.drawElementsLines(faces)
         }
         if (mesh.clearDepth) {
-          //webGLUtil.clearDepth(this._gl)
           this._gl.enable(this._gl.DEPTH_TEST)
         }
       }

@@ -13,7 +13,8 @@ vec3 fixedNormal;
 
 void main(void) {
   if (f_UseNormal == 1) {
-    fixedNormal = (f_MVMatrix * vec4(f_normals, 0.0)).xyz;
+    //fixedNormal = (f_MVMatrix * vec4(f_normals, 0.0)).xyz;
+    fixedNormal = f_normals;
     fixedNormal = normalize(fixedNormal);
     fixedNormal = (fixedNormal + 1.0) / 2.0;
 

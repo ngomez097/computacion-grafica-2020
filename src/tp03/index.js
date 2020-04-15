@@ -1,5 +1,5 @@
 const WebGLRender = require('./WebGL/WebGLRender')
-const Scene = require('./Scene.js')
+const Scene = require('./WebGL/Scene')
 const Axes = require('./Objects/Axes')
 const Mesh = require('./Objects/Mesh')
 const PerspectiveCamera = require('./Camera/PerspectiveCamera')
@@ -13,24 +13,30 @@ const dat = require('dat.gui')
 
 console.log('tp03')
 const cameraConf = {
-  fov: 45,
+  fov: 60,
   eye: [0.0, 5.0, 10.0],
   center: [0, 0, 0],
-  rpy: [0, -30, -90],
-  useOrthographicCamera: false
+  rpy: [0, -30, 0],
+  useOrthographicCamera: false,
+  useLookAt: false,
+  vel: 0.2
 }
 
 const mouseConf = {
   isDragging: false,
   sensitivityX: 0.10,
-  sensitivityY: 0.10,
+  sensitivityY: 0.10
 }
 
 const cubeConf = {
   pos: [-6, 0, 0],
   scale: [1, 1, 1],
   rotation: [0, 0, 0],
-  isWireframe: false
+  localRotation: [0, 0, 0],
+  prevLocalRotation: [0, 0, 0],
+  rotationq: [0, 0, 0, 1],
+  isWireframe: false,
+  useQuaternion: false
 }
 
 const coneConf = {
@@ -71,6 +77,23 @@ let sphere
 let cylinder
 let canvas
 
+/**
+ * Controles
+ * - w / s: mover hacia al frente / atras de la camara.
+ * - a / d: mover hacia la izquierda / derecha de la camara.
+ * - q / e: subir / bajar la camara.
+ * - Hold shift: mover mas rapido la camara.
+ */
+let keyPressed = {
+  w: false,
+  a: false,
+  s: false,
+  d: false,
+  q: false,
+  e: false,
+  shift: false
+}
+
 function init (canvasName) {
   initGUI()
   canvas = document.getElementById(canvasName)
@@ -80,7 +103,8 @@ function init (canvasName) {
   // Linkeando los valores de la camara.
   camera.eye = cameraConf.eye
   camera.center = cameraConf.center
-  camera.rpy = cameraConf.rpy
+  camera.vel = cameraConf.vel
+  camera.addPitch(cameraConf.rpy[1])
 
   // Creacion de la grilla
   let grid = new Grid(20)
@@ -95,47 +119,50 @@ function init (canvasName) {
   scene.addObjects(cube)
 
   // Linkeando los valores del cubo
-  cube.meshes[0].t = cubeConf.pos
-  cube.meshes[0].s = cubeConf.scale
-  cube.meshes[0].r = cubeConf.rotation
+  cube.t = cubeConf.pos
+  cube.s = cubeConf.scale
+  cube.r = cubeConf.rotation
+  cube.rq = cubeConf.rotationq
 
   // Creacion de un cono.
   cone = new Cone(coneConf.vertex, 1, 2, coneConf.shadeSmooth)
   scene.addObjects(cone)
 
   // Linkeando los valores del cono
-  cone.meshes[0].t = coneConf.pos
-  cone.meshes[0].s = coneConf.scale
-  cone.meshes[0].r = coneConf.rotation
+  cone.t = coneConf.pos
+  cone.s = coneConf.scale
+  cone.r = coneConf.rotation
 
   // Creacion de un cilindro.
   cylinder = new Cylinder(cylinderConf.segments, 1, 2, cylinderConf.shadeSmooth)
   scene.addObjects(cylinder)
 
   // Linkeando los valores del cilindro
-  cylinder.meshes[0].t = cylinderConf.pos
-  cylinder.meshes[0].s = cylinderConf.scale
-  cylinder.meshes[0].r = cylinderConf.rotation
+  cylinder.t = cylinderConf.pos
+  cylinder.s = cylinderConf.scale
+  cylinder.r = cylinderConf.rotation
 
   // Creacion de una esfera.
   sphere = new Sphere(sphereConf.vertex, sphereConf.rings, sphereConf.radius, sphereConf.shadeSmooth)
   scene.addObjects(sphere)
 
   // Linkeando los valores de la esfera
-  sphere.meshes[0].t = sphereConf.pos
-  sphere.meshes[0].s = sphereConf.scale
-  sphere.meshes[0].r = sphereConf.rotation
-
-  canvas.requestPointerLock = canvas.requestPointerLock ||
-                            canvas.mozRequestPointerLock
-
-  canvas.requestPointerLock()
+  sphere.t = sphereConf.pos
+  sphere.s = sphereConf.scale
+  sphere.r = sphereConf.rotation
 
   document.addEventListener('pointerlockchange', e => {
     if (document.pointerLockElement !== canvas) {
-      console.log('Sis')
       canvas.onmousemove = null
     }
+  })
+
+  document.addEventListener('keydown', e => {
+    keyPressed[e.key.toLowerCase()] = true
+  })
+
+  document.addEventListener('keyup', e => {
+    keyPressed[e.key.toLowerCase()] = false
   })
 
   canvas.onclick = function (event) {
@@ -144,18 +171,21 @@ function init (canvasName) {
     canvas.onmousemove = function (event) {
       let aspect = canvas.clientWidth / canvas.clientHeight
 
-      let auxX = event.movementX
-      let auxY = event.movementY
+      let auxX
+      let auxY
 
-      cameraConf.rpy[2] += auxX * mouseConf.sensitivityX
-      cameraConf.rpy[1] -= auxY * mouseConf.sensitivityY * aspect
+      auxX = event.movementX * mouseConf.sensitivityX
+      auxY = event.movementY * mouseConf.sensitivityY * aspect
 
-      if (cameraConf.rpy[1] > 89.0) {
+      if (cameraConf.rpy[1] - auxY > 89.0) {
         cameraConf.rpy[1] = 89.0
-      }
-      if (cameraConf.rpy[1] < -89.0) {
+      } else if (cameraConf.rpy[1] - auxY < -89.0) {
         cameraConf.rpy[1] = -89.0
+      } else {
+        camera.addPitch(-auxY)
+        cameraConf.rpy[1] -= auxY
       }
+      camera.addYaw(-auxX)
     }
   }
 
@@ -164,6 +194,35 @@ function init (canvasName) {
 
 // Funcion para realizar la animacion.
 function renderLoop () {
+  if (keyPressed.shift) {
+    cameraConf.vel = 0.4
+  } else {
+    cameraConf.vel = 0.2
+  }
+  if (keyPressed.w) {
+    camera.moveForward(cameraConf.vel)
+  }
+
+  if (keyPressed.s) {
+    camera.moveBackward(cameraConf.vel)
+  }
+
+  if (keyPressed.d) {
+    camera.moveRight(cameraConf.vel)
+  }
+
+  if (keyPressed.a) {
+    camera.moveLeft(cameraConf.vel)
+  }
+
+  if (keyPressed.q) {
+    cameraConf.eye[1] += cameraConf.vel
+  }
+
+  if (keyPressed.e) {
+    cameraConf.eye[1] -= cameraConf.vel
+  }
+
   wegGLRender.clearBackground(scene.clearColor)
   wegGLRender.render(scene, camera)
 
@@ -173,6 +232,21 @@ function renderLoop () {
   } else {
     cube.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
   }
+  cube.useQuaternion = cubeConf.useQuaternion
+
+  cube.rotateLocal(
+    cubeConf.localRotation[0] - cubeConf.prevLocalRotation[0]
+    , 0)
+  cube.rotateLocal(
+    cubeConf.localRotation[1] - cubeConf.prevLocalRotation[1]
+    , 1)
+  cube.rotateLocal(
+    cubeConf.localRotation[2] - cubeConf.prevLocalRotation[2]
+    , 2)
+
+  cubeConf.prevLocalRotation[0] = cubeConf.localRotation[0]
+  cubeConf.prevLocalRotation[1] = cubeConf.localRotation[1]
+  cubeConf.prevLocalRotation[2] = cubeConf.localRotation[2]
 
   // Cono
   if (coneConf.isWireframe) {
@@ -220,15 +294,16 @@ function renderLoop () {
     // Linkeando los valores de la camara.
     camera.eye = cameraConf.eye
     camera.center = cameraConf.center
-    camera.rotate = cameraConf.rpy
+    camera.rpy = cameraConf.rpy
   } else if (!cameraConf.useOrthographicCamera && camera instanceof OrthographicCamera) {
     camera = new PerspectiveCamera(cameraConf.fov, canvas.clientWidth / canvas.clientHeight)
 
     // Linkeando los valores de la camara.
     camera.eye = cameraConf.eye
     camera.center = cameraConf.center
-    camera.rotate = cameraConf.rpy
+    camera.rpy = cameraConf.rpy
   }
+  camera.useLookAt = cameraConf.useLookAt
 
   // Configuracion de la camara
   camera.setFovFromDegrees(cameraConf.fov)
@@ -243,6 +318,7 @@ function initGUI () {
   // Cubo
   let cubeGUI = object.addFolder('Cube')
   cubeGUI.add(cubeConf, 'isWireframe')
+  cubeGUI.add(cubeConf, 'useQuaternion')
   let position = cubeGUI.addFolder('Position')
   position.add(cubeConf.pos, 0, -10, 10).name('X')
   position.add(cubeConf.pos, 1, -10, 10).name('Y')
@@ -255,6 +331,15 @@ function initGUI () {
   rotate.add(cubeConf.rotation, 0, 0, 360).name('X')
   rotate.add(cubeConf.rotation, 1, 0, 360).name('Y')
   rotate.add(cubeConf.rotation, 2, 0, 360).name('Z')
+  let localrotate = cubeGUI.addFolder('Local Rotate')
+  localrotate.add(cubeConf.localRotation, 0, 0, 360).name('X')
+  localrotate.add(cubeConf.localRotation, 1, 0, 360).name('Y')
+  localrotate.add(cubeConf.localRotation, 2, 0, 360).name('Z')
+  let rotateQ = cubeGUI.addFolder('RotateQuaternion')
+  rotateQ.add(cubeConf.rotationq, 0, 0, 1).name('X')
+  rotateQ.add(cubeConf.rotationq, 1, 0, 1).name('Y')
+  rotateQ.add(cubeConf.rotationq, 2, 0, 1).name('Z')
+  rotateQ.add(cubeConf.rotationq, 3, 0, 10).name('W')
 
   // Cono
   let coneGUI = object.addFolder('Cone')
@@ -315,15 +400,14 @@ function initGUI () {
   // Camara
   let camera = gui.addFolder('Camera')
   camera.add(cameraConf, 'fov', 0, 90)
+  camera.add(cameraConf, 'useLookAt').name('Use LookAt?')
   camera.add(cameraConf, 'useOrthographicCamera')
   let cameraPosition = camera.addFolder('Position')
-  cameraPosition.add(cameraConf.eye, 0, 0, 20).name('X')
-  cameraPosition.add(cameraConf.eye, 1, 0, 20).name('Y')
-  cameraPosition.add(cameraConf.eye, 2, 0, 20).name('Z')
+  cameraPosition.add(cameraConf.eye, 0).name('X').listen()
+  cameraPosition.add(cameraConf.eye, 1).name('Y').listen()
+  cameraPosition.add(cameraConf.eye, 2).name('Z').listen()
   rotate = camera.addFolder('Rotate')
-  rotate.add(cameraConf.rpy, 0, 0, 360).name('X')
-  rotate.add(cameraConf.rpy, 1, 0, 360).name('Y')
-  rotate.add(cameraConf.rpy, 2, 0, 360).name('Z')
+  rotate.add(cameraConf.rpy, 0, 0, 360).name('Roll')
   let cameraRotation = camera.addFolder('Look At')
   cameraRotation.add(cameraConf.center, 0, 0, 10).name('X')
   cameraRotation.add(cameraConf.center, 1, 0, 10).name('Y')
