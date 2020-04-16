@@ -1,6 +1,6 @@
 const mat4 = require('gl-matrix/mat4')
 const vec3 = require('gl-matrix/vec3')
-const LocalAxis = require('../Axis/LocalAxis')
+const LocalAxis = require('../Axis/LocalAxisYXZ')
 
 class Camera extends LocalAxis {
   constructor (
@@ -25,7 +25,9 @@ class Camera extends LocalAxis {
       mat4.lookAt(this.viewMatrix, this.eye, this.center, this.up)
     } else {
       mat4.translate(this.viewMatrix, this.viewMatrix, this.eye)
-      mat4.multiply(this.viewMatrix, this.viewMatrix, this.localAxis)
+
+      let localMatrix = this.getAxisMatrix()
+      mat4.multiply(this.viewMatrix, this.viewMatrix, localMatrix)
       mat4.invert(this.viewMatrix, this.viewMatrix)
     }
     return this.viewMatrix
@@ -36,7 +38,7 @@ class Camera extends LocalAxis {
   }
 
   addPitch (angle) {
-    this.rot = this.rotateLocal(angle, LocalAxis.LOCAL_AXE.X)
+    this.rotateLocal(angle, LocalAxis.LOCAL_AXE.X)
   }
 
   addYaw (angle) {

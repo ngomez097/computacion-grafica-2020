@@ -65,6 +65,10 @@ class LocalAxis {
     ]
     return localAxis
   }
+
+  getAxisMatrix () {
+    return this.localAxis
+  }
 }
 
 module.exports = LocalAxis

@@ -12,11 +12,13 @@ const Sphere = require('./Objects/Sphere')
 const dat = require('dat.gui')
 
 console.log('tp03')
+let angle
+let face
 const cameraConf = {
   fov: 60,
   eye: [0.0, 5.0, 10.0],
   center: [0, 0, 0],
-  rpy: [0, -30, 0],
+  rpy: [0, 0, 0],
   useOrthographicCamera: false,
   useLookAt: false,
   vel: 0.2
@@ -36,7 +38,8 @@ const cubeConf = {
   prevLocalRotation: [0, 0, 0],
   rotationq: [0, 0, 0, 1],
   isWireframe: false,
-  useQuaternion: false
+  useQuaternion: false,
+  anim: true
 }
 
 const coneConf = {
@@ -121,7 +124,7 @@ function init (canvasName) {
   // Linkeando los valores del cubo
   cube.t = cubeConf.pos
   cube.s = cubeConf.scale
-  cube.r = cubeConf.rotation
+  cube.rotation = cubeConf.rotation
   cube.rq = cubeConf.rotationq
 
   // Creacion de un cono.
@@ -188,7 +191,8 @@ function init (canvasName) {
       camera.addYaw(-auxX)
     }
   }
-
+  angle = 0
+  face = 0
   requestAnimationFrame(renderLoop)
 }
 
@@ -247,6 +251,15 @@ function renderLoop () {
   cubeConf.prevLocalRotation[0] = cubeConf.localRotation[0]
   cubeConf.prevLocalRotation[1] = cubeConf.localRotation[1]
   cubeConf.prevLocalRotation[2] = cubeConf.localRotation[2]
+
+  if (cubeConf.anim) {
+    if (angle >= 90) {
+      angle = 0
+      face = Math.round(Math.random() * 2)
+    }
+    cube.rotateLocal(1, face)
+    angle++
+  }
 
   // Cono
   if (coneConf.isWireframe) {
@@ -319,6 +332,7 @@ function initGUI () {
   let cubeGUI = object.addFolder('Cube')
   cubeGUI.add(cubeConf, 'isWireframe')
   cubeGUI.add(cubeConf, 'useQuaternion')
+  cubeGUI.add(cubeConf, 'anim')
   let position = cubeGUI.addFolder('Position')
   position.add(cubeConf.pos, 0, -10, 10).name('X')
   position.add(cubeConf.pos, 1, -10, 10).name('Y')
@@ -328,9 +342,9 @@ function initGUI () {
   scale.add(cubeConf.scale, 1, 0, 10).name('Y')
   scale.add(cubeConf.scale, 2, 0, 10).name('Z')
   let rotate = cubeGUI.addFolder('Rotate')
-  rotate.add(cubeConf.rotation, 0, 0, 360).name('X')
-  rotate.add(cubeConf.rotation, 1, 0, 360).name('Y')
-  rotate.add(cubeConf.rotation, 2, 0, 360).name('Z')
+  rotate.add(cubeConf.rotation, 0).name('X').listen()
+  rotate.add(cubeConf.rotation, 1).name('Y').listen()
+  rotate.add(cubeConf.rotation, 2).name('Z').listen()
   let localrotate = cubeGUI.addFolder('Local Rotate')
   localrotate.add(cubeConf.localRotation, 0, 0, 360).name('X')
   localrotate.add(cubeConf.localRotation, 1, 0, 360).name('Y')
