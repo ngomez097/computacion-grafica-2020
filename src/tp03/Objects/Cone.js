@@ -1,6 +1,13 @@
 const ObjectScene = require('./ObjectScene')
 
+// Clase para la creacion de un cono.
 class Cone extends ObjectScene {
+  /**
+   * @param {*} baseVertexCount Cantidad de vertices en la base.
+   * @param {*} radius Radio de la base.
+   * @param {*} heigth Altura del cono.
+   * @param {*} shadeSmooth Determina si se aplica smooth o flat shading.
+   */
   constructor (
     baseVertexCount = 3,
     radius = 1,
@@ -18,7 +25,8 @@ class Cone extends ObjectScene {
   constructCone () {
     let mesh = this.meshes[0]
     mesh.geometry.clearData()
-    let topVertex = [0, this.heigth, 0]
+    let offsetY = this.heigth / 2.0
+    let topVertex = [0, offsetY, 0]
     let v1 = []
     let v2 = []
     let dt = 2 * Math.PI / this.baseVertexCount
@@ -27,9 +35,9 @@ class Cone extends ObjectScene {
 
     for (let i = 0; i < this.baseVertexCount; i++) {
       angle = dt * i
-      v1 = [Math.cos(angle) * this.radius, 0, Math.sin(angle) * this.radius]
+      v1 = [Math.cos(angle) * this.radius, -offsetY, Math.sin(angle) * this.radius]
       angle = dt * (i + 1)
-      v2 = [Math.cos(angle) * this.radius, 0, Math.sin(angle) * this.radius]
+      v2 = [Math.cos(angle) * this.radius, -offsetY, Math.sin(angle) * this.radius]
 
       mesh.insertTriangle([
         topVertex, v2, v1

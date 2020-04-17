@@ -59,7 +59,7 @@ class Geometry {
 
   /**
    * Funcion que agrega caras en el arreglo de caras.
-   * @param {Array} face Un arreglo con los indices de los
+   * @param {Array} faces Un arreglo con los indices de los
    *  vertices que conforman la cara.
    */
   addFaces (...faces) {

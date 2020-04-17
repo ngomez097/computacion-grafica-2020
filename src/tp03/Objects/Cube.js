@@ -1,6 +1,9 @@
 const ObjectScene = require('./ObjectScene')
 
 class Cube extends ObjectScene {
+  /**
+   * @param {*} size Tamaño de los lados del cubo.
+   */
   constructor (
     size = 1) {
     super()

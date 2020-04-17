@@ -13,6 +13,7 @@ vec3 fixedNormal;
 
 void main(void) {
   if (f_UseNormal == 1) {
+    // Para poder ver los ejes locales se descomento la siguiente linea.
     //fixedNormal = (f_MVMatrix * vec4(f_normals, 0.0)).xyz;
     fixedNormal = f_normals;
     fixedNormal = normalize(fixedNormal);

@@ -1,6 +1,6 @@
 const mat4 = require('gl-matrix/mat4')
 const vec3 = require('gl-matrix/vec3')
-const LocalAxis = require('../Axis/LocalAxisYXZ')
+const LocalAxis = require('../Axis/LocalAxis')
 
 class Camera extends LocalAxis {
   constructor (
@@ -19,6 +19,9 @@ class Camera extends LocalAxis {
     this.useLookAt = false
   }
 
+  /**
+   * Funcion para obtener la matrix de la camara.
+   */
   getViewMatrix () {
     this.viewMatrix = mat4.create()
     if (this.useLookAt) {
@@ -33,42 +36,73 @@ class Camera extends LocalAxis {
     return this.viewMatrix
   }
 
+  /**
+   * Funcion para agregar angulo sobre el eje local de roll.
+   * @param {*} angle Angulo en grados.
+   */
   addRoll (angle) {
-    this.rotateLocal(angle, LocalAxis.LOCAL_AXE.Z)
+    this.rotateLocal(angle, LocalAxis.AXIS.Z)
   }
 
+  /**
+   * Funcion para agregar angulo sobre el eje local de pitch.
+   * @param {*} angle Angulo en grados.
+   */
   addPitch (angle) {
-    this.rotateLocal(angle, LocalAxis.LOCAL_AXE.X)
+    this.rotateLocal(angle, LocalAxis.AXIS.X)
   }
 
+  /**
+   * Funcion para agregar angulo sobre el eje local de yaw.
+   * @param {*} angle Angulo en grados.
+   */
   addYaw (angle) {
-    this.rotateGlobal(angle, LocalAxis.LOCAL_AXE.Y)
+    this.rotateGlobal(angle, LocalAxis.AXIS.Y)
   }
 
+  /**
+   * Mover la camara hacia adelante.
+   * @param {*} velocity Velocidad para desplazar la camara.
+   */
   moveForward (velocity = 0.2) {
-    let moveDirection = this.getLocalAxis(LocalAxis.LOCAL_AXE.Z)
+    let moveDirection = this.getLocalAxis(null, LocalAxis.AXIS.Z)
     vec3.scale(moveDirection, moveDirection, velocity)
     vec3.sub(this.eye, this.eye, moveDirection)
   }
 
+  /**
+   * Mover la camara hacia atras.
+   * @param {*} velocity Velocidad para desplazar la camara.
+   */
   moveBackward (velocity = 0.2) {
-    let moveDirection = this.getLocalAxis(LocalAxis.LOCAL_AXE.Z)
+    let moveDirection = this.getLocalAxis(null, LocalAxis.AXIS.Z)
     vec3.scale(moveDirection, moveDirection, velocity)
     vec3.add(this.eye, this.eye, moveDirection)
   }
 
+  /**
+   * Mover la camara hacia la derecha.
+   * @param {*} velocity Velocidad para desplazar la camara.
+   */
   moveRight (velocity = 0.2) {
-    let moveDirection = this.getLocalAxis(LocalAxis.LOCAL_AXE.X)
+    let moveDirection = this.getLocalAxis(null, LocalAxis.AXIS.X)
     vec3.scale(moveDirection, moveDirection, velocity)
     vec3.add(this.eye, this.eye, moveDirection)
   }
 
+  /**
+   * Mover la camara hacia la izquierda.
+   * @param {*} velocity Velocidad para desplazar la camara.
+   */
   moveLeft (velocity = 0.2) {
-    let moveDirection = this.getLocalAxis(LocalAxis.LOCAL_AXE.X)
+    let moveDirection = this.getLocalAxis(null, LocalAxis.AXIS.X)
     vec3.scale(moveDirection, moveDirection, velocity)
     vec3.sub(this.eye, this.eye, moveDirection)
   }
 
+  /**
+   * Obtencion de la matriz de proyeccion.
+   */
   getProjectionMatrix () {
     return this.projectionMatrix
   }

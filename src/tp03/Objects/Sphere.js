@@ -3,6 +3,12 @@ const cos = Math.cos
 const sin = Math.sin
 
 class Sphere extends ObjectScene {
+  /**
+   * @param {*} vertexRing Cantidad de vertices por anillo.
+   * @param {*} rings Cantidad de anillos.
+   * @param {*} radius Radio de la esfera.
+   * @param {*} shadeSmooth Determina si se aplica smooth o flat shading.
+   */
   constructor (
     vertexRing = 32,
     rings = 32,
@@ -29,6 +35,7 @@ class Sphere extends ObjectScene {
     let auxR, auxR1
     let v1, v2, v3, v4
 
+    // Caras superiores e inferiores
     auxY = this.radius - dy
     auxR = (this.radius ** 2 - auxY ** 2) ** 0.5
     for (let i = 0; i < this.vertexRing; i++) {
@@ -43,6 +50,7 @@ class Sphere extends ObjectScene {
       mesh.insertTriangle([bottomVertex, v3, v4], !this.shadeSmooth)
     }
 
+    // Caras laterales
     for (let i = 1; i < this.rings; i++) {
       auxY = this.radius - dy * i
       auxY1 = this.radius - dy * (i + 1)

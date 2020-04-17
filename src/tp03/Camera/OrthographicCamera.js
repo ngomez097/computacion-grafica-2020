@@ -19,10 +19,6 @@ class OrthographicCamera extends Camera {
     this.far = far
   }
 
-  setFovFromDegrees (angle) {
-    this.fov = angle * Math.PI / 180.0
-  }
-
   getProjectionMatrix () {
     this.projectionMatrix = mat4.create()
     mat4.ortho(this.projectionMatrix,

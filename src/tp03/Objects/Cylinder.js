@@ -1,6 +1,12 @@
 const ObjectScene = require('./ObjectScene')
 
 class Cylinder extends ObjectScene {
+  /**
+   * @param {*} segments Cantidad de segmentos del cilindro.
+   * @param {*} radius Radio del cilindro.
+   * @param {*} heigth Altura del cilindro.
+   * @param {*} shadeSmooth Determina si se aplica smooth o flat shading.
+   */
   constructor (
     segments = 3,
     radius = 1,
@@ -24,21 +30,24 @@ class Cylinder extends ObjectScene {
     let botommVertex = []
     let topVertex = []
 
+    // Caras laterales.
     for (let i = 0; i < this.segments; i++) {
       angle = dt * i
       xz1 = [Math.cos(angle) * this.radius, Math.sin(angle) * this.radius]
       angle = dt * (i + 1)
       xz2 = [Math.cos(angle) * this.radius, Math.sin(angle) * this.radius]
+      let offsetY = this.heigth / 2.0
       mesh.insertPlane([
-        [xz1[0], this.heigth, xz1[1]],
-        [xz2[0], this.heigth, xz2[1]],
-        [xz2[0], 0, xz2[1]],
-        [xz1[0], 0, xz1[1]]
+        [xz1[0], offsetY, xz1[1]],
+        [xz2[0], offsetY, xz2[1]],
+        [xz2[0], -offsetY, xz2[1]],
+        [xz1[0], -offsetY, xz1[1]]
       ], !this.shadeSmooth)
-      topVertex.push([xz2[0], this.heigth, xz2[1]])
-      botommVertex.push([xz2[0], 0, xz2[1]])
+      topVertex.push([xz2[0], offsetY, xz2[1]])
+      botommVertex.push([xz2[0], -offsetY, xz2[1]])
     }
 
+    // Tapas superior e inferior.
     switch (botommVertex.length) {
       case 3:
         mesh.insertTriangle([

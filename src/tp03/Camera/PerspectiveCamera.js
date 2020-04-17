@@ -15,6 +15,10 @@ class PerspectiveCamera extends Camera {
     this.far = far
   }
 
+  /**
+   * Funcion para establecer el fov de la camara.
+   * @param {*} angle Angulo en grados.
+   */
   setFovFromDegrees (angle) {
     this.fov = angle * Math.PI / 180.0
   }

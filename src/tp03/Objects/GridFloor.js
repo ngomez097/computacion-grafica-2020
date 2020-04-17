@@ -2,6 +2,9 @@ const ObjectScene = require('./ObjectScene')
 const Mesh = require('./Mesh')
 
 class GridFloor extends ObjectScene {
+  /**
+   * @param {*} size Tamaño de la grilla.
+   */
   constructor (size = 10) {
     super()
     this.size = size

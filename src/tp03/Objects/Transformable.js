@@ -1,6 +1,6 @@
 const mat4 = require('gl-matrix/mat4')
 const quat = require('gl-matrix/quat')
-const LocalAxis = require('../Axis/LocalAxisXYZ')
+const LocalAxis = require('../Axis/LocalAxis')
 
 class Transformable extends LocalAxis {
   constructor () {
@@ -11,6 +11,9 @@ class Transformable extends LocalAxis {
     this.useQuaternion = false
   }
 
+  /**
+   * Funcion para obtener la matriz del objeto.
+   */
   getModelMatrix () {
     this.modelMatrix = mat4.create()
     let rotMat = mat4.create()
