@@ -52,8 +52,9 @@ void main(void) {
         break;
       }
       pointLight = u_pointLights[i];
-      distanceLight = distance(pointLight.pos, f_vertex_position);
-      pointLightDir = normalize(pointLight.pos - f_vertex_position);
+      pointLightDir = pointLight.pos - f_vertex_position;
+      distanceLight = length(pointLightDir);
+      pointLightDir = normalize(pointLightDir);
       angleDir = max(dot(pointLightDir, fixedNormal), 0.0);
       
       pointColor += (u_Color * pointLight.color * angleDir) * (pointLight.intensity / pow(distanceLight, 2.0));

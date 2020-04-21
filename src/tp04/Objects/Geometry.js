@@ -138,10 +138,24 @@ class Geometry {
     return true
   }
 
+  /**
+   * Funcion para limpiar los datos de la geometria.
+   */
   clearData () {
     this.vertices = []
     this.faces = []
     this.normals = []
+  }
+
+  /**
+   * Funcion para realizar una copia de la clase.
+   */
+  clone () {
+    let clone = new Geometry(this.type)
+    clone.vertices = [...this.vertices]
+    clone.faces = [...this.faces]
+    clone.normals = [...this.normals]
+    return clone
   }
 }
 

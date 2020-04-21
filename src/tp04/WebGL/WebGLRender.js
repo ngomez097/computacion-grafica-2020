@@ -150,9 +150,11 @@ class WebGLRender {
     }
 
     let ModelMatrix
+    let InvertseTransposeModelMatrix
     let vertices
     let faces
     let normals
+
     // Se establece la matriz de proyeccion
     let PMatrix = camera.getProjectionMatrix()
     webGLUtil.setUniformLocation(this._gl, this.prg, 'u_PMatrix', PMatrix)
@@ -189,7 +191,17 @@ class WebGLRender {
         continue
       }
       ModelMatrix = object.getModelMatrix()
-      for (let mesh of object.meshes) {
+      InvertseTransposeModelMatrix = object.getInverseTransposeMatrix(ModelMatrix)
+      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_MVMatrix', ModelMatrix)
+      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_MVInverseTransposeMatrix', InvertseTransposeModelMatrix)
+
+      // Dibujando cada malla del objeto.
+      let meshes = [...object.meshes]
+      if (object.showLocalAxis) {
+        meshes = meshes.concat(object.localAxisRepresentation.meshes)
+      }
+
+      for (let mesh of meshes) {
         vertices = mesh.geometry.vertices
         faces = mesh.geometry.faces
         normals = mesh.geometry.normals
@@ -203,7 +215,6 @@ class WebGLRender {
 
         this.setIndexBuffer(faces)
 
-        webGLUtil.setUniformLocation(this._gl, this.prg, 'u_MVMatrix', ModelMatrix)
         webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Color', mesh.material)
         webGLUtil.setUniformLocation(this._gl, this.prg, 'u_UseNormal', mesh.useNormal)
 
@@ -218,6 +229,7 @@ class WebGLRender {
         } else {
           this.drawElementsLines(faces)
         }
+
         if (mesh.clearDepth) {
           this._gl.enable(this._gl.DEPTH_TEST)
         }

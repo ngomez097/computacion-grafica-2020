@@ -1,6 +1,6 @@
 const WebGLRender = require('./WebGL/WebGLRender')
 const Scene = require('./WebGL/Scene')
-const Axis = require('./Objects/Axis')
+const Axis = require('./Axis/Axis')
 const Mesh = require('./Objects/Mesh')
 const PerspectiveCamera = require('./Camera/PerspectiveCamera')
 const OrthographicCamera = require('./Camera/OrthographicCamera')
@@ -34,22 +34,30 @@ const cameraConf = {
   eye: [0.0, 7.0, 11.0],
   center: [0, 0, 0],
   rpy: [0, -30, 0],
+  minVel: 0.1,
+  maxVel: 0.3,
   useOrthographicCamera: false,
   useLookAt: false,
-  vel: 0.2
+  vel: 0.1
 }
 
 // Objeto con la cofiguracion de la grilla.
 const gridConf = {
   size: 20.0,
   gap: 1.0,
-  enable: true
+  enable: false
 }
 
 // Objeto con la cofiguracion de los ejes.
 const axisConf = {
   size: 10,
   show_axis: [true, true, true]
+}
+
+const floorConf = {
+  pos: [0.0, -1.5, 0.0],
+  size: 30.0,
+  scale: [1.0, 0.01, 1.0],
 }
 
 // Objeto con las opciones del mouse.
@@ -63,7 +71,6 @@ const cubeConf = {
   pos: [-6, 0, 0],
   scale: [1, 1, 1],
   rotation: [0.0, 0.0, 0.0],
-  prevLocalRotation: [0, 0, 0],
   rotationq: [0, 0, 0, 1],
   isWireframe: false,
   useQuaternion: false,
@@ -105,23 +112,23 @@ const sphereConf = {
 // Configuracion luz puntual 1
 const direccionalLightConf = {
   direction: [0.0, -1.0, 0.0],
-  color: [10.0, 25.0, 10.0]
+  color: [1.0, 2.0, 1.0]
 }
 
 // Configuracion luz puntual 1
 const pointLight1Conf = {
-  pos: [-5.0, 3.0, 5.0],
+  pos: [-5.0, 3.0, 6.0],
   color: [255.0, 100.0, 60.0],
-  intensity: 20,
+  intensity: 30,
   enable: true,
   showRepresentation: true
 }
 
 // Configuracion luz puntual 2
 const pointLight2Conf = {
-  pos: [5.0, 3.0, 5.0],
+  pos: [5.0, 3.0, 6.0],
   color: [80.0, 150.0, 255.0],
-  intensity: 20,
+  intensity: 30,
   enable: true,
   showRepresentation: true
 }
@@ -175,10 +182,12 @@ function init (canvasName) {
 
   // Creacion de la grilla
   grid = new Grid(20)
+  grid.enableRender = gridConf.enable
   scene.addObjects(grid)
 
   // Creacion de los ejes
   axis = new Axis(axisConf.size, axisConf.show_axis)
+  axis.enableRender = gridConf.enable
   scene.addObjects(axis)
 
   // Insertando luces.
@@ -213,8 +222,15 @@ function init (canvasName) {
   pointLights[1].conf = pointLight2Conf
   scene.addPointLights(pointLights[1])
 
+  // Creacion de un piso.
+  cube = new Cube(floorConf.size)
+  cube.t = floorConf.pos
+  cube.s = floorConf.scale
+  scene.addObjects(cube)
+
   // Creacion de un cubo.
   cube = new Cube(2)
+  cube.showLocalAxis = true
   scene.addObjects(cube)
 
   // Linkeando los valores del cubo
@@ -301,9 +317,9 @@ function init (canvasName) {
 function renderLoop () {
   // Controles para la camara libre
   if (keyPressed.shift) {
-    cameraConf.vel = 0.4
+    cameraConf.vel = cameraConf.maxVel
   } else {
-    cameraConf.vel = 0.2
+    cameraConf.vel = cameraConf.minVel
   }
   if (keyPressed.w) {
     camera.moveForward(cameraConf.vel)
@@ -396,14 +412,14 @@ function renderLoop () {
     // Linkeando los valores de la nueva camara.
     camera.eye = cameraConf.eye
     camera.center = cameraConf.center
-    camera.rpy = cameraConf.rpy
+    camera.addPitch(cameraConf.rpy[1])
   } else if (!cameraConf.useOrthographicCamera && camera instanceof OrthographicCamera) {
     camera = new PerspectiveCamera(cameraConf.fov, canvas.clientWidth / canvas.clientHeight)
 
     // Linkeando los valores de la nueva camara.
     camera.eye = cameraConf.eye
     camera.center = cameraConf.center
-    camera.rpy = cameraConf.rpy
+    camera.addPitch(cameraConf.rpy[1])
   }
   camera.useLookAt = cameraConf.useLookAt
 

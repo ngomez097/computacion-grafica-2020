@@ -1,13 +1,13 @@
+const Geometry = require('./Geometry')
 const vec3 = require('../Utils/vec3')
 
 class Mesh {
-  constructor (geometry, material = [1.0, 1.0, 1.0], renderType = Mesh.RENDER_TYPE.TRIANGLES) {
-    this.geometry = geometry
+  constructor (material = [1.0, 1.0, 1.0], renderType = Mesh.RENDER_TYPE.TRIANGLES) {
+    this.geometry = new Geometry()
     this.material = material
-    this.modelMatrix = null
     this.renderType = renderType
-    this.clearDepth = false
     this.useNormal = true
+    this.clearDepth = false
   }
 
   static get RENDER_TYPE () {
@@ -23,6 +23,23 @@ class Mesh {
    */
   setGeometry (geometry) {
     this.geometry = geometry
+  }
+
+  /**
+   * Funcion que inserta una linea a la geometria.
+   * @param {Array} vertices: Se espera que se manden exactamente 3 vertices.
+   * @param {Boolean} duplicated: si se duplica el vertice.
+   * @param {Boolean} flipNormal: si se dibuja la normal alrevez.
+   */
+  insertLine (vertices, duplicated = false) {
+    if (vertices.length !== 2) {
+      return
+    }
+    let index = this.geometry.addVertices(vertices, duplicated)
+
+    this.geometry.addFaces(
+      [index[0], index[1]]
+    )
   }
 
   /**
@@ -141,6 +158,19 @@ class Mesh {
       }
       this.insertNGon(auxVertices, false, flipNormal)
     }
+  }
+
+  /**
+   * Funcion para realizar una copia de la clase.
+   */
+  clone () {
+    let clone = new Mesh()
+    clone.geometry = this.geometry.clone()
+    clone.material = this.material
+    clone.renderType = this.renderType
+    clone.useNormal = this.useNormal
+    clone.clearDepth = this.clearDepth
+    return clone
   }
 }
 

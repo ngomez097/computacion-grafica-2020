@@ -35,6 +35,13 @@ class Transformable extends LocalAxis {
     mat4.scale(this.modelMatrix, this.modelMatrix, this.s)
     return this.modelMatrix
   }
+
+  getInverseTransposeMatrix (ModelMatrix) {
+    let aux = mat4.clone(ModelMatrix)
+    mat4.invert(aux, aux)
+    mat4.transpose(aux, aux)
+    return aux
+  }
 }
 
 module.exports = Transformable

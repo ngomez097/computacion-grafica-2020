@@ -1,6 +1,6 @@
-const Geometry = require('./Geometry')
 const Mesh = require('./Mesh')
 const Transformable = require('./Transformable')
+const Axis = require('../Axis/Axis')
 
 class ObjectScene extends Transformable {
   /**
@@ -11,12 +11,14 @@ class ObjectScene extends Transformable {
     super()
     this.meshes = []
 
-    let geometry = new Geometry()
-    let mesh = new Mesh(geometry)
-    mesh.renderType = renderType
-    mesh.material = [0.8, 0.8, 0.8]
+    let mesh = new Mesh(
+      [0.8, 0.8, 0.8],
+      renderType
+    )
     this.meshes.push(mesh)
     this.enableRender = true
+    this.showLocalAxis = false
+    this.localAxisRepresentation = new Axis()
 
     for (let mesh of meshes) {
       this.meshes.push(mesh)

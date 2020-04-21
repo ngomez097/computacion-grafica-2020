@@ -1,9 +1,8 @@
-const Mesh = require('./Mesh')
-const Geometry = require('./Geometry')
-const ObjectScene = require('./ObjectScene')
+const Mesh = require('../Objects/Mesh')
+const Transformable = require('../Objects/Transformable')
 
 // Clase para la creacion de la grilla.
-class Axis extends ObjectScene {
+class Axis extends Transformable {
   /**
    * @param {*} size Tamaño de los ejes.
    * @param {*} show_axe Para determinar que ejes dibujar.
@@ -14,59 +13,68 @@ class Axis extends ObjectScene {
     show_axe = [true, true, true],
     inFront = true
   ) {
-    super()
-    let eje
     let mesh
+
+    super()
+    this.meshes = []
+    this.enableRender = true
 
     // Eje X
     if (show_axe[0]) {
-      mesh = this.meshes[0]
-      eje = mesh.geometry
-      eje.addVertices([
+      // Para marcar la profundidad
+      mesh = new Mesh()
+      mesh.material = [1.0, 0.4, 0.4]
+      mesh.insertLine([
         [0.0, 0.0, 0.0],
         [size, 0.0, 0.0]
       ])
-      eje.addFaces([0, 1])
-
-      mesh.material = [1.0, 0.4, 0.4]
       mesh.renderType = Mesh.RENDER_TYPE.LINES
       mesh.useNormal = false
-      mesh.clearDepth = inFront
       this.meshes.push(mesh)
+
+      if (inFront) {
+        mesh = mesh.clone()
+        mesh.clearDepth = inFront
+        this.meshes.push(mesh)
+      }
     }
 
     // Eje Y
     if (show_axe[1]) {
-      eje = new Geometry()
-      eje.addVertices([
+      mesh = new Mesh()
+      mesh.material = [0.4, 1.0, 0.4]
+      mesh.insertLine([
         [0.0, 0.0, 0.0],
         [0.0, size, 0.0]
       ])
-      eje.addFaces([0, 1])
-
-      mesh = new Mesh(eje)
-      mesh.material = [0.4, 1.0, 0.4]
       mesh.renderType = Mesh.RENDER_TYPE.LINES
       mesh.useNormal = false
-      mesh.clearDepth = inFront
       this.meshes.push(mesh)
+
+      if (inFront) {
+        mesh = mesh.clone()
+        mesh.clearDepth = inFront
+        this.meshes.push(mesh)
+      }
     }
 
     // Eje Z
     if (show_axe[2]) {
-      eje = new Geometry()
-      eje.addVertices([
+      mesh = new Mesh()
+      mesh.material = [0.4, 0.4, 1.0]
+      mesh.insertLine([
         [0.0, 0.0, 0.0],
         [0.0, 0.0, size]
       ])
-      eje.addFaces([0, 1])
-      mesh = new Mesh(eje)
-
-      mesh.material = [0.4, 0.4, 1.0]
       mesh.renderType = Mesh.RENDER_TYPE.LINES
       mesh.useNormal = false
-      mesh.clearDepth = inFront
       this.meshes.push(mesh)
+
+      if (inFront) {
+        mesh = mesh.clone()
+        mesh.clearDepth = inFront
+        this.meshes.push(mesh)
+      }
     }
   }
 }
