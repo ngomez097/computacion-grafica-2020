@@ -8,6 +8,7 @@ class Geometry {
   constructor (type = Geometry.TYPE['3D']) {
     this.vertices = []
     this.faces = []
+    this.wireframeFaces = []
     this.normals = []
     this.type = type
   }
@@ -63,10 +64,16 @@ class Geometry {
    *  vertices que conforman la cara.
    */
   addFaces (...faces) {
+    let i
     for (let face of faces) {
-      for (let component of face) {
-        this.faces.push(component)
+      for (i = 0; i < face.length - 1; i++) {
+        this.faces.push(face[i])
+        this.wireframeFaces.push(face[i], face[i + 1])
       }
+      if (face.length > 2) {
+        this.wireframeFaces.push(face[i], face[0])
+      }
+      this.faces.push(face[i])
     }
   }
 
@@ -145,6 +152,7 @@ class Geometry {
     this.vertices = []
     this.faces = []
     this.normals = []
+    this.wireframeFaces = []
   }
 
   /**
@@ -155,6 +163,7 @@ class Geometry {
     clone.vertices = [...this.vertices]
     clone.faces = [...this.faces]
     clone.normals = [...this.normals]
+    clone.wireframeFaces = [...this.wireframeFaces]
     return clone
   }
 }

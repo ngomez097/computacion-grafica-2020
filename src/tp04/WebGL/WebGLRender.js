@@ -172,18 +172,17 @@ class WebGLRender {
     }
 
     // Luces puntuales
-    let pointLight
-    for (let i = 0; i < scene.pointLights.length; i++) {
-      pointLight = scene.pointLights[i]
+    let numLights = 0
+    for (let pointLight of scene.pointLights) {
       if (pointLight.enable === false) {
-        webGLUtil.setUniformLocation(this._gl, this.prg, `u_pointLights[${i}].intensity`, 0.0)
         continue
       }
-      webGLUtil.setUniformLocation(this._gl, this.prg, `u_pointLights[${i}].pos`, pointLight.position)
-      webGLUtil.setUniformLocation(this._gl, this.prg, `u_pointLights[${i}].color`, pointLight.color)
-      webGLUtil.setUniformLocation(this._gl, this.prg, `u_pointLights[${i}].intensity`, pointLight.intensity)
+      webGLUtil.setUniformLocation(this._gl, this.prg, `u_pointLights[${numLights}].pos`, pointLight.position)
+      webGLUtil.setUniformLocation(this._gl, this.prg, `u_pointLights[${numLights}].color`, pointLight.color)
+      webGLUtil.setUniformLocation(this._gl, this.prg, `u_pointLights[${numLights}].intensity`, pointLight.intensity)
+      numLights++
     }
-    webGLUtil.setUniformLocation(this._gl, this.prg, 'u_numPointLights', scene.pointLights.length, true)
+    webGLUtil.setUniformLocation(this._gl, this.prg, 'u_numPointLights', numLights, true)
 
     // Dibujar los objetos
     for (let object of scene.objects) {
@@ -203,8 +202,13 @@ class WebGLRender {
 
       for (let mesh of meshes) {
         vertices = mesh.geometry.vertices
-        faces = mesh.geometry.faces
         normals = mesh.geometry.normals
+
+        if (mesh.renderType === Mesh.RENDER_TYPE.LINES) {
+          faces = mesh.geometry.wireframeFaces
+        } else {
+          faces = mesh.geometry.faces
+        }
 
         if (mesh.geometry.type === Geometry.TYPE['2D']) {
           this.setVertexBuffer2D(vertices)

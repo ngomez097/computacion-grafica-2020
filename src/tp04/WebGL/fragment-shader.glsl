@@ -1,5 +1,5 @@
 #ifdef GL_ES
-precision highp float;
+precision mediump float;
 precision mediump int;
 #endif
 
@@ -26,7 +26,6 @@ uniform int u_numPointLights;
 varying vec3 f_normals;
 varying vec3 f_vertex_position;
 
-
 vec3 fixedNormal;
 vec3 pointLightDir;
 vec3 dirColor;
@@ -34,7 +33,10 @@ vec3 pointColor;
 
 float angleDir;
 float distanceLight;
+float attenuation;
 PointLight pointLight;
+
+float random(vec2 xy);
 
 void main(void) {
   if (u_UseNormal == 1) {
@@ -55,15 +57,27 @@ void main(void) {
       pointLightDir = pointLight.pos - f_vertex_position;
       distanceLight = length(pointLightDir);
       pointLightDir = normalize(pointLightDir);
-      angleDir = max(dot(pointLightDir, fixedNormal), 0.0);
+      angleDir = dot(pointLightDir, fixedNormal);
+      if (angleDir < 0.0) {
+        continue;
+      }
+      attenuation = clamp(pointLight.intensity / pow(distanceLight, 2.0), 0.0, 1.0);
       
-      pointColor += (u_Color * pointLight.color * angleDir) * (pointLight.intensity / pow(distanceLight, 2.0));
+      pointColor += (u_Color * pointLight.color * angleDir) * attenuation;
+      
     }
 
-    // Luz Ambiente.
+    // Se introduce un poco de ruido para tratar de ocultar los bordes cunado cambia el color.
+    pointColor.rgb += mix(-2.0/255.0, 2.0/255.0, random(f_vertex_position.xz));
+
+    // Luz Total.
     gl_FragColor.rgb = u_ambientLight + dirColor + pointColor;
     gl_FragColor.a = 1.0;
   } else {
     gl_FragColor = vec4(u_Color, 1.0);
   }
+}
+
+float random(vec2 xy) {
+    return fract(sin(dot(xy ,vec2(12.9898,78.233))) * 43758.5453);
 }

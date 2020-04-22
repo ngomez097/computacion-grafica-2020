@@ -122,9 +122,10 @@ class Mesh {
     let isPair = vertices.length % 2 === 0
     let count = Math.floor(vertices.length / 2)
 
-    if (isPair) {
+    count -= isPair
+    /* if (isPair) {
       count -= 1
-    }
+    } */
 
     for (let i = 0; i < count; i++) {
       this.insertTriangle([

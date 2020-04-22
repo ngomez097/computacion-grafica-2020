@@ -118,8 +118,8 @@ const direccionalLightConf = {
 // Configuracion luz puntual 1
 const pointLight1Conf = {
   pos: [-5.0, 3.0, 6.0],
-  color: [255.0, 100.0, 60.0],
-  intensity: 30,
+  color: [255.0, 0.0, 50.0],
+  intensity: 100,
   enable: true,
   showRepresentation: true
 }
@@ -127,8 +127,17 @@ const pointLight1Conf = {
 // Configuracion luz puntual 2
 const pointLight2Conf = {
   pos: [5.0, 3.0, 6.0],
-  color: [80.0, 150.0, 255.0],
-  intensity: 30,
+  color: [50.0, 0.0, 255.0],
+  intensity: 100,
+  enable: true,
+  showRepresentation: true
+}
+
+// Configuracion luz puntual 3
+const pointLight3Conf = {
+  pos: [0.0, 3.0, -6.0],
+  color: [50.0, 255.0, 50.0],
+  intensity: 100,
   enable: true,
   showRepresentation: true
 }
@@ -166,7 +175,6 @@ let keyPressed = {
 }
 
 function init (canvasName) {
-  initGUI()
   canvas = document.getElementById(canvasName)
   wegGLRender = new WebGLRender(canvas)
   camera = new PerspectiveCamera(cameraConf.fov, canvas.clientWidth / canvas.clientHeight)
@@ -222,14 +230,25 @@ function init (canvasName) {
   pointLights[1].conf = pointLight2Conf
   scene.addPointLights(pointLights[1])
 
+  // Luz 2
+  pointLights[2] = new PointLight(
+    pointLight3Conf.pos,
+    pointLight3Conf.intesity,
+    vec3.scale([], pointLight3Conf.color, 1.0 / 255.0),
+    new Cube(0.25)
+  )
+  pointLights[2].conf = pointLight3Conf
+  scene.addPointLights(pointLights[2])
+
   // Creacion de un piso.
-  cube = new Cube(floorConf.size)
-  cube.t = floorConf.pos
-  cube.s = floorConf.scale
-  scene.addObjects(cube)
+  let floor = new Cube(floorConf.size)
+  floor.t = floorConf.pos
+  floor.s = floorConf.scale
+  scene.addObjects(floor)
 
   // Creacion de un cubo.
   cube = new Cube(2)
+  cube.meshes[0].material = [1.0, 0.0, 0.0]
   cube.showLocalAxis = true
   scene.addObjects(cube)
 
@@ -246,10 +265,12 @@ function init (canvasName) {
   // Linkeando los valores del cono
   cone.t = coneConf.pos
   cone.s = coneConf.scale
+  cone.meshes[0].material = [0.0, 1.0, 0.0]
   cone.rotation = coneConf.rotation
 
   // Creacion de un cilindro.
   cylinder = new Cylinder(cylinderConf.segments, 1, 2, cylinderConf.shadeSmooth)
+  cylinder.meshes[0].material = [0.0, 0.0, 1.0]
   scene.addObjects(cylinder)
 
   // Linkeando los valores del cilindro
@@ -258,7 +279,13 @@ function init (canvasName) {
   cylinder.rotation = cylinderConf.rotation
 
   // Creacion de una esfera.
-  sphere = new Sphere(sphereConf.vertex, sphereConf.rings, sphereConf.radius, sphereConf.shadeSmooth)
+  sphere = new Sphere(
+    sphereConf.vertex,
+    sphereConf.rings,
+    sphereConf.radius,
+    sphereConf.shadeSmooth
+  )
+  sphere.meshes[0].material = [1.0, 1.0, 1.0]
   scene.addObjects(sphere)
 
   // Linkeando los valores de la esfera
@@ -310,6 +337,7 @@ function init (canvasName) {
   angle = 0
   face = 0
   maxAngle = 90
+  initGUI()
   requestAnimationFrame(renderLoop)
 }
 
@@ -349,7 +377,7 @@ function renderLoop () {
 
   // Cubo
   if (cubeConf.isWireframe) {
-    cube.meshes[0].renderType = Mesh.RENDER_TYPE.LINE_LOOP
+    cube.meshes[0].renderType = Mesh.RENDER_TYPE.LINES
   } else {
     cube.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
   }
@@ -357,7 +385,7 @@ function renderLoop () {
 
   // Cono
   if (coneConf.isWireframe) {
-    cone.meshes[0].renderType = Mesh.RENDER_TYPE.LINE_LOOP
+    cone.meshes[0].renderType = Mesh.RENDER_TYPE.LINES
   } else {
     cone.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
   }
@@ -370,7 +398,7 @@ function renderLoop () {
 
   // Cilindro
   if (cylinderConf.isWireframe) {
-    cylinder.meshes[0].renderType = Mesh.RENDER_TYPE.LINE_LOOP
+    cylinder.meshes[0].renderType = Mesh.RENDER_TYPE.LINES
   } else {
     cylinder.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
   }
@@ -382,7 +410,7 @@ function renderLoop () {
 
   // Esfera
   if (sphereConf.isWireframe) {
-    sphere.meshes[0].renderType = Mesh.RENDER_TYPE.LINE_LOOP
+    sphere.meshes[0].renderType = Mesh.RENDER_TYPE.LINES
   } else {
     sphere.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
   }
@@ -570,28 +598,22 @@ function initGUI () {
 
   // Luces Puntuales
   let pointGUI = lucesGUI.addFolder('Point Lights')
-
-  // Luz puntual 1
-  let point1GUI = pointGUI.addFolder('Point Light 1')
-  point1GUI.add(pointLight1Conf, 'intensity', 0, 100, 0.1)
-  point1GUI.add(pointLight1Conf, 'enable').name('Enable')
-  point1GUI.add(pointLight1Conf, 'showRepresentation').name('Show Cube')
-  point1GUI.addColor(pointLight1Conf, 'color')
-  positionGUI = point1GUI.addFolder('Position')
-  positionGUI.add(pointLight1Conf.pos, 0, -10, 10).name('X')
-  positionGUI.add(pointLight1Conf.pos, 1, -10, 10).name('Y')
-  positionGUI.add(pointLight1Conf.pos, 2, -10, 10).name('Z')
-
-  // Luz puntual 2
-  let point2GUI = pointGUI.addFolder('Point Light 2')
-  point2GUI.add(pointLight2Conf, 'intensity', 0, 100, 0.1)
-  point2GUI.add(pointLight2Conf, 'enable').name('Enable')
-  point2GUI.add(pointLight2Conf, 'showRepresentation').name('Show Cube')
-  point2GUI.addColor(pointLight2Conf, 'color')
-  positionGUI = point2GUI.addFolder('Position')
-  positionGUI.add(pointLight2Conf.pos, 0, -10, 10).name('X')
-  positionGUI.add(pointLight2Conf.pos, 1, -10, 10).name('Y')
-  positionGUI.add(pointLight2Conf.pos, 2, -10, 10).name('Z')
+  let pointiGUI
+  let conf
+  let pointLight
+  for (let i = 0; i < pointLights.length; i++) {
+    pointLight = pointLights[i]
+    conf = pointLight.conf
+    pointiGUI = pointGUI.addFolder(`Point Light ${i + 1}`)
+    pointiGUI.add(conf, 'intensity', 0, 100, 0.1)
+    pointiGUI.add(conf, 'enable').name('Enable')
+    pointiGUI.add(conf, 'showRepresentation').name('Show Cube')
+    pointiGUI.addColor(conf, 'color')
+    positionGUI = pointiGUI.addFolder('Position')
+    positionGUI.add(conf.pos, 0, -10, 10).name('X')
+    positionGUI.add(conf.pos, 1, -10, 10).name('Y')
+    positionGUI.add(conf.pos, 2, -10, 10).name('Z')
+  }
 }
 
 init('c')
