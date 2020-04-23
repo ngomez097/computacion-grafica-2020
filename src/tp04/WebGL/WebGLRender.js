@@ -3,6 +3,9 @@ const PerspectiveCamera = require('../Camera/PerspectiveCamera')
 const Geometry = require('../Objects/Geometry')
 const Mesh = require('../Objects/Mesh')
 
+const mat4 = require('gl-matrix/mat4')
+const vec3 = require('gl-matrix/vec3')
+
 class WebGLRender {
   constructor (canvas) {
     if (canvas == null) {
@@ -136,6 +139,29 @@ class WebGLRender {
   clearBackground (color) {
     webGLUtil.resizeCanvas(this._gl)
     webGLUtil.paintBackground(this._gl, color)
+  }
+
+  rayCasting (x, y, camera) {
+    let matP = camera.getProjectionMatrix()
+    let matV = camera.getViewMatrix()
+    let canvas = this._gl.canvas
+    let aux = []
+
+    mat4.invert(matP, matP)
+    mat4.invert(matV, matV)
+
+    let nx = 2.0 * x / canvas.clientWidth - 1.0
+    let ny = 1.0 - 2.0 * y / canvas.clientHeight
+    let vector = [nx, ny, -1.0, 0.0]
+
+    mat4.multiply(aux, matP, vector)
+    vector = [aux[0], aux[1], -1.0, 0.0]
+
+    mat4.multiply(aux, matV, vector)
+    vector = [aux[0], aux[1], aux[2]]
+
+    vec3.normalize(vector, vector)
+    return vector
   }
 
   /**

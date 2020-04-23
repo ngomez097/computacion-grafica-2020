@@ -10,6 +10,7 @@ const Cone = require('./Objects/Cone')
 const Cylinder = require('./Objects/Cylinder')
 const Sphere = require('./Objects/Sphere')
 const DirLight = require('./Light/DirLight')
+const Line = require('./Objects/Line')
 const PointLight = require('./Light/PointLight')
 
 const vec3 = require('gl-matrix/vec3')
@@ -157,7 +158,8 @@ let pointLights = []
 
 console.log(
   'Controles\n' +
-  '- Click: entrar en modo Fly.\n' +
+  '- Right click: entrar en modo Fly.\n' +
+  '- Left click: se lanza un rayo de prueba.\n' +
   '- w / s:        mover hacia al frente / atras de la camara.\n' +
   '- a / d:        mover hacia la izquierda / derecha de la camara.\n' +
   '- Space / Ctrl: subir / bajar la camara.\n' +
@@ -310,8 +312,8 @@ function init (canvasName) {
   })
 
   // Funcion para mover el pitch y yaw de la camara con el mouse.
-  canvas.onclick = function (event) {
-    mouseConf.isDragging = true
+  canvas.addEventListener('contextmenu', e => {
+    e.preventDefault()
     canvas.requestPointerLock()
     canvas.onmousemove = function (event) {
       let aspect = canvas.clientWidth / canvas.clientHeight
@@ -332,7 +334,18 @@ function init (canvasName) {
       }
       camera.addYaw(-auxX)
     }
-  }
+  })
+  canvas.addEventListener('click', event => {
+    let vector = wegGLRender.rayCasting(event.clientX, event.clientY, camera)
+    vec3.scale(vector, vector, 20)
+
+    let lookDir = vec3.add([], camera.eye, vector)
+    let line = new Line(
+      camera.eye,
+      lookDir
+    )
+    scene.addObjects(line)
+  })
 
   angle = 0
   face = 0
@@ -470,8 +483,22 @@ function renderLoop () {
   let conf
   for (let pointLight of pointLights) {
     conf = pointLight.conf
-    pointLight.intensity = conf.intensity
-    pointLight.enable = conf.enable
+    if (conf.enable === false) {
+      if (pointLight.intensity > 0) {
+        pointLight.intensity -= 10
+      }
+      pointLight.intensity = Math.max(pointLight.intensity, 0.0)
+      if (pointLight.intensity === 0) {
+        pointLight.enable = false
+      }
+    } else {
+      pointLight.enable = true
+      if (pointLight.intensity < conf.intensity) {
+        pointLight.intensity += 10
+      }
+      pointLight.intensity = Math.min(pointLight.intensity, conf.intensity)
+    }
+
     pointLight.representation.enableRender = conf.showRepresentation
     let color = vec3.scale([], conf.color, 1.0 / 255.0)
     pointLight.representation.meshes[0].material = color
@@ -483,6 +510,7 @@ function renderLoop () {
 
 function initGUI () {
   let gui = new dat.GUI()
+  gui.close()
   // Grilla y Ejes
   gui.add(gridConf, 'enable').name('Show grid & axis')
 

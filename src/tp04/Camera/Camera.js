@@ -100,6 +100,10 @@ class Camera extends LocalAxis {
     vec3.sub(this.eye, this.eye, moveDirection)
   }
 
+  getLookDirection () {
+    return vec3.scale([], this.getLocalAxis(null, LocalAxis.AXIS.Z), -1)
+  }
+
   /**
    * Obtencion de la matriz de proyeccion.
    */
