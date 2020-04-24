@@ -2,7 +2,7 @@ const mat4 = require('gl-matrix/mat4')
 const quat = require('gl-matrix/quat')
 const LocalAxis = require('../Axis/LocalAxis')
 
-class Transformable extends LocalAxis {
+class ObjectProperty extends LocalAxis {
   constructor () {
     super()
     this.t = [0.0, 0.0, 0.0]
@@ -44,4 +44,4 @@ class Transformable extends LocalAxis {
   }
 }
 
-module.exports = Transformable
+module.exports = ObjectProperty

@@ -141,6 +141,13 @@ class WebGLRender {
     webGLUtil.paintBackground(this._gl, color)
   }
 
+  /**
+   *  Funcion para calcular la direccion de un rayo desde la camara
+   * con respecto a un punto en la pantalla.
+   * @param {*} x Posicion x de la pantalla.
+   * @param {*} y Posicion y de la pantalla.
+   * @param {*} camera Camara de la cual calcular el rayo.
+   */
   rayCasting (x, y, camera) {
     let matP = camera.getProjectionMatrix()
     let matV = camera.getViewMatrix()
@@ -188,13 +195,18 @@ class WebGLRender {
     // Se establece las propiedades de la camara
     let VMatrix = camera.getViewMatrix()
     webGLUtil.setUniformLocation(this._gl, this.prg, 'u_VMatrix', VMatrix)
+    webGLUtil.setUniformLocation(this._gl, this.prg, 'u_eyes_position', camera.eye)
 
-    // Se establece las luces.
-    // Luz de ambiente y directa.
+    /* Se establece las luces. */
+    // Luz de ambiente.
     webGLUtil.setUniformLocation(this._gl, this.prg, 'u_ambientLight', scene.ambientLight)
+    webGLUtil.setUniformLocation(this._gl, this.prg, 'u_ambientLightIntensity', scene.ambientLightIntensity)
+
+    // Luz directa.
     if (scene.dirLight !== null) {
       webGLUtil.setUniformLocation(this._gl, this.prg, 'u_dirLight.dir', scene.dirLight.direction)
       webGLUtil.setUniformLocation(this._gl, this.prg, 'u_dirLight.color', scene.dirLight.color)
+      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_dirLight.intensity', scene.dirLight.intensity)
     }
 
     // Luces puntuales
@@ -209,6 +221,21 @@ class WebGLRender {
       numLights++
     }
     webGLUtil.setUniformLocation(this._gl, this.prg, 'u_numPointLights', numLights, true)
+
+    // Luces Spot
+    numLights = 0
+    for (let spotLight of scene.spotLights) {
+      if (spotLight.enable === false) {
+        continue
+      }
+      webGLUtil.setUniformLocation(this._gl, this.prg, `u_spotLights[${numLights}].pos`, spotLight.position)
+      webGLUtil.setUniformLocation(this._gl, this.prg, `u_spotLights[${numLights}].color`, spotLight.color)
+      webGLUtil.setUniformLocation(this._gl, this.prg, `u_spotLights[${numLights}].intensity`, spotLight.intensity)
+      webGLUtil.setUniformLocation(this._gl, this.prg, `u_spotLights[${numLights}].dir`, spotLight.direction)
+      webGLUtil.setUniformLocation(this._gl, this.prg, `u_spotLights[${numLights}].angle`, spotLight.angle)
+      numLights++
+    }
+    webGLUtil.setUniformLocation(this._gl, this.prg, 'u_numSpotLights', numLights, true)
 
     // Dibujar los objetos
     for (let object of scene.objects) {
@@ -246,6 +273,7 @@ class WebGLRender {
         this.setIndexBuffer(faces)
 
         webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Color', mesh.material)
+        webGLUtil.setUniformLocation(this._gl, this.prg, 'u_SpecularColor', mesh.specularColor)
         webGLUtil.setUniformLocation(this._gl, this.prg, 'u_UseNormal', mesh.useNormal)
 
         if (mesh.clearDepth) {

@@ -1,8 +1,8 @@
 const Mesh = require('../Objects/Mesh')
-const Transformable = require('../Objects/Transformable')
+const ObjectProperty = require('../Objects/ObjectProperty')
 
 // Clase para la creacion de la grilla.
-class Axis extends Transformable {
+class Axis extends ObjectProperty {
   /**
    * @param {*} size Tamaño de los ejes.
    * @param {*} show_axe Para determinar que ejes dibujar.

@@ -16,8 +16,10 @@ class Scene {
     }
     this.objects = []
     this.ambientLight = ambientLight
+    this.ambientLightIntensity = 1.0
     this.dirLight = null
     this.pointLights = []
+    this.spotLights = []
   }
 
   /** Funcion para agregar varios objetos a la escena. */
@@ -27,6 +29,10 @@ class Scene {
     }
   }
 
+  /**
+   * Funcion Para agregar luces puntuales a la escena.
+   * @param  {...any} pointLights Una o mas de luces.
+   */
   addPointLights (...pointLights) {
     for (let pointLight of pointLights) {
       if (pointLight.representation !== null &&
@@ -37,6 +43,23 @@ class Scene {
         this.addObjects(pointLight.representation)
       }
       this.pointLights.push(pointLight)
+    }
+  }
+
+  /**
+   * Funcion Para agregar lamparas a la escena.
+   * @param  {...any} spotLights Una o mas de luces.
+   */
+  addSpotLights (...spotLights) {
+    for (let spotLight of spotLights) {
+      if (spotLight.representation !== null &&
+          spotLight.representation instanceof ObjectScene) {
+        spotLight.representation.meshes[0].material = vec3.scale([], spotLight.color, 0.8)
+        spotLight.representation.t = spotLight.position
+        spotLight.representation.meshes[0].useNormal = false
+        this.addObjects(spotLight.representation)
+      }
+      this.spotLights.push(spotLight)
     }
   }
 }

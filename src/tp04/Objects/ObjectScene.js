@@ -1,8 +1,8 @@
 const Mesh = require('./Mesh')
-const Transformable = require('./Transformable')
+const ObjectProperty = require('./ObjectProperty')
 const Axis = require('../Axis/Axis')
 
-class ObjectScene extends Transformable {
+class ObjectScene extends ObjectProperty {
   /**
    * @param {Mesh.renderType} renderType Forma en la que se dibujara.
    * @param  {...any} meshes mallas extras del objeto.
@@ -27,6 +27,19 @@ class ObjectScene extends Transformable {
 
   getMeshes () {
     return this.meshes
+  }
+
+  /**
+   * Funcion para determinar si se muestra la maya como Wireframe.
+   * @param {*} bool True si se muestra el wireframe.
+   * @param {*} mesh La maya objetivo.
+   */
+  showWireframe (bool, mesh = 0) {
+    if (bool) {
+      this.meshes[mesh].renderType = Mesh.RENDER_TYPE.LINES
+    } else {
+      this.meshes[mesh].renderType = Mesh.RENDER_TYPE.TRIANGLES
+    }
   }
 }
 

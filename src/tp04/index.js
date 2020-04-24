@@ -1,7 +1,6 @@
 const WebGLRender = require('./WebGL/WebGLRender')
 const Scene = require('./WebGL/Scene')
 const Axis = require('./Axis/Axis')
-const Mesh = require('./Objects/Mesh')
 const PerspectiveCamera = require('./Camera/PerspectiveCamera')
 const OrthographicCamera = require('./Camera/OrthographicCamera')
 const Grid = require('./Objects/GridFloor')
@@ -12,6 +11,8 @@ const Sphere = require('./Objects/Sphere')
 const DirLight = require('./Light/DirLight')
 const Line = require('./Objects/Line')
 const PointLight = require('./Light/PointLight')
+const SpotLight = require('./Light/SpotLight')
+const FPSControl = require('./Control/FPSControl')
 
 const vec3 = require('gl-matrix/vec3')
 const dat = require('dat.gui')
@@ -26,7 +27,8 @@ let maxAngle
 // Objeto con las opciones de la escena.
 const sceneConf = {
   colorBackground: [0.0, 0.0, 0.0],
-  ambientLight: [0.01, 0.01, 0.01]
+  ambientLight: [255.0, 255.0, 255.0],
+  ambientLightIntensity: 0.05
 }
 
 // Objeto con las opciones de la camara.
@@ -34,12 +36,8 @@ const cameraConf = {
   fov: 60,
   eye: [0.0, 7.0, 11.0],
   center: [0, 0, 0],
-  rpy: [0, -30, 0],
-  minVel: 0.1,
-  maxVel: 0.3,
   useOrthographicCamera: false,
   useLookAt: false,
-  vel: 0.1
 }
 
 // Objeto con la cofiguracion de la grilla.
@@ -55,16 +53,11 @@ const axisConf = {
   show_axis: [true, true, true]
 }
 
+// Objecto para la configuracion del piso.
 const floorConf = {
   pos: [0.0, -1.5, 0.0],
-  size: 30.0,
+  size: 50.0,
   scale: [1.0, 0.01, 1.0],
-}
-
-// Objeto con las opciones del mouse.
-const mouseConf = {
-  sensitivityX: 0.10,
-  sensitivityY: 0.10
 }
 
 // Objeto con las opciones del cubo.
@@ -73,7 +66,7 @@ const cubeConf = {
   scale: [1, 1, 1],
   rotation: [0.0, 0.0, 0.0],
   rotationq: [0, 0, 0, 1],
-  isWireframe: false,
+  showWireframe: false,
   useQuaternion: false,
   anim: true
 }
@@ -85,7 +78,7 @@ const coneConf = {
   rotation: [0, 0, 0],
   vertex: 8,
   shadeSmooth: false,
-  isWireframe: false
+  showWireframe: false
 }
 
 // Objeto con las opciones del cilindro.
@@ -95,7 +88,7 @@ const cylinderConf = {
   rotation: [0, 0, 0],
   segments: 16,
   shadeSmooth: true,
-  isWireframe: false
+  showWireframe: false
 }
 
 // Objeto con las opciones de la esfera.
@@ -107,17 +100,19 @@ const sphereConf = {
   vertex: 16,
   radius: 1,
   shadeSmooth: true,
-  isWireframe: false
+  showWireframe: false
 }
 
-// Configuracion luz puntual 1
+// Configuracion luz direccional
 const direccionalLightConf = {
-  direction: [0.0, -1.0, 0.0],
-  color: [1.0, 2.0, 1.0]
+  direction: [1.0, -1.0, 0.0],
+  color: [255.0, 255.0, 255.0],
+  intensity: 0.05
 }
 
 // Configuracion luz puntual 1
 const pointLight1Conf = {
+  name: 'Point Light 1',
   pos: [-5.0, 3.0, 6.0],
   color: [255.0, 0.0, 50.0],
   intensity: 100,
@@ -127,6 +122,7 @@ const pointLight1Conf = {
 
 // Configuracion luz puntual 2
 const pointLight2Conf = {
+  name: 'Point Light 2',
   pos: [5.0, 3.0, 6.0],
   color: [50.0, 0.0, 255.0],
   intensity: 100,
@@ -136,8 +132,21 @@ const pointLight2Conf = {
 
 // Configuracion luz puntual 3
 const pointLight3Conf = {
+  name: 'Point Light 3',
   pos: [0.0, 3.0, -6.0],
   color: [50.0, 255.0, 50.0],
+  intensity: 100,
+  enable: true,
+  showRepresentation: true
+}
+
+// Configuracion del Spot Light
+const spotLightConf = {
+  name: 'Spot Light 1',
+  pos: [0.0, 10.0, 0.0],
+  color: [255.0, 255.0, 255.0],
+  direction: [0.0, -1.0, 0.0],
+  maxAngle: 0.8,
   intensity: 100,
   enable: true,
   showRepresentation: true
@@ -154,7 +163,8 @@ let cone
 let sphere
 let cylinder
 let canvas
-let pointLights = []
+let Lights = []
+let control
 
 console.log(
   'Controles\n' +
@@ -179,16 +189,21 @@ let keyPressed = {
 function init (canvasName) {
   canvas = document.getElementById(canvasName)
   wegGLRender = new WebGLRender(canvas)
+
+  // Creacion de la camara.
   camera = new PerspectiveCamera(cameraConf.fov, canvas.clientWidth / canvas.clientHeight)
 
   // Creando la escena.
   scene = new Scene(sceneConf.colorBackground)
 
+  // Creando el control de la camara.
+  control = new FPSControl()
+
   // Linkeando los valores de la camara.
   camera.eye = cameraConf.eye
   camera.center = cameraConf.center
   camera.vel = cameraConf.vel
-  camera.addPitch(cameraConf.rpy[1])
+  camera.addPitch(control.fpsConf.rpy[1])
 
   // Creacion de la grilla
   grid = new Grid(20)
@@ -203,6 +218,7 @@ function init (canvasName) {
   // Insertando luces.
   // Luz direccional.
   dirLight = new DirLight(
+    direccionalLightConf.intensity,
     direccionalLightConf.direction,
     vec3.scale([], direccionalLightConf.color, 1.0 / 255.0)
   )
@@ -213,34 +229,50 @@ function init (canvasName) {
 
   // Luces puntuales.
   // Luz 1
-  pointLights[0] = new PointLight(
+  Lights[0] = new PointLight(
     pointLight1Conf.pos,
     pointLight1Conf.intensity,
     vec3.scale([], pointLight1Conf.color, 1.0 / 255.0),
     new Cube(0.25)
   )
-  pointLights[0].conf = pointLight1Conf
-  scene.addPointLights(pointLights[0])
+  Lights[0].conf = pointLight1Conf
+  Lights[0].enable = pointLight1Conf.enable
+  scene.addPointLights(Lights[0])
 
   // Luz 2
-  pointLights[1] = new PointLight(
+  Lights[1] = new PointLight(
     pointLight2Conf.pos,
-    pointLight2Conf.intesity,
+    pointLight2Conf.intensity,
     vec3.scale([], pointLight2Conf.color, 1.0 / 255.0),
     new Cube(0.25)
   )
-  pointLights[1].conf = pointLight2Conf
-  scene.addPointLights(pointLights[1])
+  Lights[1].conf = pointLight2Conf
+  Lights[1].enable = pointLight2Conf.enable
+  scene.addPointLights(Lights[1])
 
-  // Luz 2
-  pointLights[2] = new PointLight(
+  // Luz 3
+  Lights[2] = new PointLight(
     pointLight3Conf.pos,
-    pointLight3Conf.intesity,
+    pointLight3Conf.intensity,
     vec3.scale([], pointLight3Conf.color, 1.0 / 255.0),
     new Cube(0.25)
   )
-  pointLights[2].conf = pointLight3Conf
-  scene.addPointLights(pointLights[2])
+  Lights[2].conf = pointLight3Conf
+  Lights[2].enable = pointLight3Conf.enable
+  scene.addPointLights(Lights[2])
+
+  // Lampara
+  Lights[3] = new SpotLight(
+    spotLightConf.maxAngle,
+    spotLightConf.pos,
+    spotLightConf.intensity,
+    spotLightConf.color,
+    spotLightConf.direction,
+    new Cube(0.25)
+  )
+  Lights[3].conf = spotLightConf
+  Lights[3].enable = spotLightConf.enable
+  scene.addSpotLights(Lights[3])
 
   // Creacion de un piso.
   let floor = new Cube(floorConf.size)
@@ -316,25 +348,11 @@ function init (canvasName) {
     e.preventDefault()
     canvas.requestPointerLock()
     canvas.onmousemove = function (event) {
-      let aspect = canvas.clientWidth / canvas.clientHeight
-
-      let auxX
-      let auxY
-
-      auxX = event.movementX * mouseConf.sensitivityX
-      auxY = event.movementY * mouseConf.sensitivityY * aspect
-
-      if (cameraConf.rpy[1] - auxY > 89.0) {
-        cameraConf.rpy[1] = 89.0
-      } else if (cameraConf.rpy[1] - auxY < -89.0) {
-        cameraConf.rpy[1] = -89.0
-      } else {
-        camera.addPitch(-auxY)
-        cameraConf.rpy[1] -= auxY
-      }
-      camera.addYaw(-auxX)
+      control.onMouseMove(camera, event)
     }
   })
+
+  // Prueba del raycasting de la camara.
   canvas.addEventListener('click', event => {
     let vector = wegGLRender.rayCasting(event.clientX, event.clientY, camera)
     vec3.scale(vector, vector, 20)
@@ -357,51 +375,17 @@ function init (canvasName) {
 // Funcion para realizar la animacion.
 function renderLoop () {
   // Controles para la camara libre
-  if (keyPressed.shift) {
-    cameraConf.vel = cameraConf.maxVel
-  } else {
-    cameraConf.vel = cameraConf.minVel
-  }
-  if (keyPressed.w) {
-    camera.moveForward(cameraConf.vel)
-  } else if (keyPressed.s) {
-    camera.moveBackward(cameraConf.vel)
-  }
-
-  if (keyPressed.d) {
-    camera.moveRight(cameraConf.vel)
-  } else if (keyPressed.a) {
-    camera.moveLeft(cameraConf.vel)
-  }
-
-  if (keyPressed.q) {
-    camera.addRoll(0.5)
-  } else if (keyPressed.e) {
-    camera.addRoll(-0.5)
-  }
-  if (keyPressed[' ']) {
-    cameraConf.eye[1] += cameraConf.vel
-  } else if (keyPressed.control) {
-    cameraConf.eye[1] -= cameraConf.vel
-  }
+  control.updateCamera(keyPressed, camera)
 
   wegGLRender.clearBackground(scene.clearColor)
   wegGLRender.render(scene, camera)
 
   // Cubo
-  if (cubeConf.isWireframe) {
-    cube.meshes[0].renderType = Mesh.RENDER_TYPE.LINES
-  } else {
-    cube.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
-  }
+  cube.showWireframe(cubeConf.showWireframe)
   cube.useQuaternion = cubeConf.useQuaternion
 
   // Cono
-  if (coneConf.isWireframe) {
-    cone.meshes[0].renderType = Mesh.RENDER_TYPE.LINES
-  } else {
-    cone.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
-  }
+  cone.showWireframe(coneConf.showWireframe)
 
   if (coneConf.vertex !== cone.baseVertexCount || coneConf.shadeSmooth !== cone.shadeSmooth) {
     cone.baseVertexCount = coneConf.vertex
@@ -410,11 +394,8 @@ function renderLoop () {
   }
 
   // Cilindro
-  if (cylinderConf.isWireframe) {
-    cylinder.meshes[0].renderType = Mesh.RENDER_TYPE.LINES
-  } else {
-    cylinder.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
-  }
+  cylinder.showWireframe(cylinderConf.showWireframe)
+
   if (cylinderConf.segments !== cylinder.segments || cylinderConf.shadeSmooth !== cylinder.shadeSmooth) {
     cylinder.segments = cylinderConf.segments
     cylinder.shadeSmooth = cylinderConf.shadeSmooth
@@ -422,11 +403,8 @@ function renderLoop () {
   }
 
   // Esfera
-  if (sphereConf.isWireframe) {
-    sphere.meshes[0].renderType = Mesh.RENDER_TYPE.LINES
-  } else {
-    sphere.meshes[0].renderType = Mesh.RENDER_TYPE.TRIANGLES
-  }
+  sphere.showWireframe(sphereConf.showWireframe)
+
   if (sphereConf.rings !== sphere.rings || sphereConf.shadeSmooth !== sphere.shadeSmooth ||
     sphereConf.vertex !== sphere.vertexRing) {
     sphere.rings = sphereConf.rings
@@ -453,14 +431,14 @@ function renderLoop () {
     // Linkeando los valores de la nueva camara.
     camera.eye = cameraConf.eye
     camera.center = cameraConf.center
-    camera.addPitch(cameraConf.rpy[1])
+    camera.addPitch(control.fpsConf.rpy[1])
   } else if (!cameraConf.useOrthographicCamera && camera instanceof OrthographicCamera) {
     camera = new PerspectiveCamera(cameraConf.fov, canvas.clientWidth / canvas.clientHeight)
 
     // Linkeando los valores de la nueva camara.
     camera.eye = cameraConf.eye
     camera.center = cameraConf.center
-    camera.addPitch(cameraConf.rpy[1])
+    camera.addPitch(control.fpsConf.rpy[1])
   }
   camera.useLookAt = cameraConf.useLookAt
 
@@ -474,40 +452,49 @@ function renderLoop () {
   axis.enableRender = gridConf.enable
 
   // Actualizando luces.
+  // Luz ambiental.
   scene.ambientLight = vec3.scale([], sceneConf.ambientLight, 1.0 / 255.0)
+  scene.ambientLightIntensity = sceneConf.ambientLightIntensity
 
   // Luz direccional
   scene.dirLight.color = vec3.scale([], direccionalLightConf.color, 1.0 / 255.0)
+  scene.dirLight.intensity = direccionalLightConf.intensity
 
   // Luces puntuales.
   let conf
-  for (let pointLight of pointLights) {
-    conf = pointLight.conf
+  for (let light of Lights) {
+    conf = light.conf
     if (conf.enable === false) {
-      if (pointLight.intensity > 0) {
-        pointLight.intensity -= 10
+      if (light.intensity > 0) {
+        light.intensity -= 10
       }
-      pointLight.intensity = Math.max(pointLight.intensity, 0.0)
-      if (pointLight.intensity === 0) {
-        pointLight.enable = false
+      light.intensity = Math.max(light.intensity, 0.0)
+      if (light.intensity === 0) {
+        light.enable = false
       }
     } else {
-      pointLight.enable = true
-      if (pointLight.intensity < conf.intensity) {
-        pointLight.intensity += 10
+      light.enable = true
+      if (light.intensity < conf.intensity) {
+        light.intensity += 10
       }
-      pointLight.intensity = Math.min(pointLight.intensity, conf.intensity)
+      light.intensity = Math.min(light.intensity, conf.intensity)
     }
 
-    pointLight.representation.enableRender = conf.showRepresentation
+    light.representation.enableRender = conf.showRepresentation
     let color = vec3.scale([], conf.color, 1.0 / 255.0)
-    pointLight.representation.meshes[0].material = color
-    pointLight.color = color
+    if (light.representation !== null) {
+      light.representation.meshes[0].material = color
+    }
+    light.color = color
+    if (conf.hasOwnProperty('maxAngle')) {
+      light.angle = conf.maxAngle
+    }
   }
 
   requestAnimationFrame(renderLoop)
 }
 
+// Configuracion de la GUI
 function initGUI () {
   let gui = new dat.GUI()
   gui.close()
@@ -519,7 +506,7 @@ function initGUI () {
 
   // Cubo
   let cubeGUI = object.addFolder('Cube')
-  cubeGUI.add(cubeConf, 'isWireframe')
+  cubeGUI.add(cubeConf, 'showWireframe')
   cubeGUI.add(cubeConf, 'useQuaternion')
   cubeGUI.add(cubeConf, 'anim')
   let positionGUI = cubeGUI.addFolder('Position')
@@ -542,7 +529,7 @@ function initGUI () {
 
   // Cono
   let coneGUI = object.addFolder('Cone')
-  coneGUI.add(coneConf, 'isWireframe')
+  coneGUI.add(coneConf, 'showWireframe')
   coneGUI.add(coneConf, 'shadeSmooth')
   coneGUI.add(coneConf, 'vertex', 3, 64, 1).name('Base Vertex')
   positionGUI = coneGUI.addFolder('Position')
@@ -560,7 +547,7 @@ function initGUI () {
 
   // Cilindro
   let cylinderGUI = object.addFolder('Cylinder')
-  cylinderGUI.add(cylinderConf, 'isWireframe')
+  cylinderGUI.add(cylinderConf, 'showWireframe')
   cylinderGUI.add(cylinderConf, 'shadeSmooth')
   cylinderGUI.add(cylinderConf, 'segments', 3, 64, 1).name('Segments')
   positionGUI = cylinderGUI.addFolder('Position')
@@ -578,7 +565,7 @@ function initGUI () {
 
   // Esfera
   let sphereGUI = object.addFolder('Sphere')
-  sphereGUI.add(sphereConf, 'isWireframe')
+  sphereGUI.add(sphereConf, 'showWireframe')
   sphereGUI.add(sphereConf, 'shadeSmooth')
   sphereGUI.add(sphereConf, 'vertex', 3, 64, 1).name('Ring Vertex')
   sphereGUI.add(sphereConf, 'rings', 1, 64, 1).name('Rings')
@@ -614,29 +601,44 @@ function initGUI () {
   let lucesGUI = gui.addFolder('Lights')
 
   // Luz de ambiente.
-  lucesGUI.addColor(sceneConf, 'ambientLight').name('Ambient Light')
+  let ambientGUI = lucesGUI.addFolder('Ambient Light')
+  ambientGUI.addColor(sceneConf, 'ambientLight').name('Ambient Light')
+  ambientGUI.add(sceneConf, 'ambientLightIntensity', 0.0, 1.0, 0.01)
 
   // Luz direccional.
   let dirLight = lucesGUI.addFolder('Directional Light')
   dirLight.addColor(direccionalLightConf, 'color')
+  dirLight.add(direccionalLightConf, 'intensity', 0.0, 1.0, 0.01)
   positionGUI = dirLight.addFolder('Direction')
   positionGUI.add(direccionalLightConf.direction, 0, -10, 10).name('X')
   positionGUI.add(direccionalLightConf.direction, 1, -10, 10).name('Y')
   positionGUI.add(direccionalLightConf.direction, 2, -10, 10).name('Z')
 
   // Luces Puntuales
-  let pointGUI = lucesGUI.addFolder('Point Lights')
+  let pointGUI = lucesGUI.addFolder('Positional Lights')
   let pointiGUI
   let conf
   let pointLight
-  for (let i = 0; i < pointLights.length; i++) {
-    pointLight = pointLights[i]
+  for (let i = 0; i < Lights.length; i++) {
+    pointLight = Lights[i]
     conf = pointLight.conf
-    pointiGUI = pointGUI.addFolder(`Point Light ${i + 1}`)
+    pointiGUI = pointGUI.addFolder(conf.name)
     pointiGUI.add(conf, 'intensity', 0, 100, 0.1)
     pointiGUI.add(conf, 'enable').name('Enable')
     pointiGUI.add(conf, 'showRepresentation').name('Show Cube')
     pointiGUI.addColor(conf, 'color')
+
+    if (conf.hasOwnProperty('maxAngle')) {
+      pointiGUI.add(conf, 'maxAngle', 0, 0.99, 0.01)
+    }
+
+    if (conf.hasOwnProperty('direction')) {
+      positionGUI = pointiGUI.addFolder('Direction')
+      positionGUI.add(conf.direction, 0, -10, 10, 0.01).name('X')
+      positionGUI.add(conf.direction, 1, -10, 10, 0.01).name('Y')
+      positionGUI.add(conf.direction, 2, -10, 10, 0.01).name('Z')
+    }
+
     positionGUI = pointiGUI.addFolder('Position')
     positionGUI.add(conf.pos, 0, -10, 10).name('X')
     positionGUI.add(conf.pos, 1, -10, 10).name('Y')

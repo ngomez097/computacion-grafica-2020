@@ -2,7 +2,7 @@ const mat4 = require('gl-matrix/mat4')
 const radFactor = Math.PI / 180.0
 
 // Clase que se encarga de gestionar la rotacion global y local.
-// La multiplicacion de las matrices se hace en el orden XYZ
+// La multiplicacion de las matrices se hace en el orden ZYX
 class LocalAxis {
   constructor () {
     this.rotation = [0.0, 0.0, 0.0]
