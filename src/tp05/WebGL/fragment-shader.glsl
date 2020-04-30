@@ -121,7 +121,7 @@ vec3 calculatePointLights () {
       attenuation = pow(attenuation, 0.5);
     }
     
-    color += u_Color * pointLight.color * angleDir * attenuation + (pointLight.color + vec3(0.8)) * attenuation2 * attenuation;
+    color += u_Color * pointLight.color * angleDir * attenuation + (pointLight.color + vec3(0.8)) * attenuation2;
     color += clamp(pow(specular, 1000.0) * pointLight.color * pointLight.intensity / 100.0, 0.0, 1.0);
   }
   return color;
