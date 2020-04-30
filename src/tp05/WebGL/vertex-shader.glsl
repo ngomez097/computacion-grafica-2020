@@ -16,6 +16,7 @@ varying vec3 f_normals;
 varying vec3 f_vertex_position;
 
 vec4 pos;
+mat4 InverseTranspose;
 
 void main(void) {
   f_normals = (u_MVInverseTransposeMatrix * vec4(a_VertexNormal, 0.0)).xyz;

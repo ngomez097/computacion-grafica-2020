@@ -14,7 +14,7 @@ class CubeGeometry extends Geometry {
    * Metodo que calcula los vertices del cubo y los introduce en la geometria.
    * @param {*} size Tamaño de los lados del cubo.
    */
-  constructCube (size) {
+  constructCube (size, flipNormal = false) {
     this.clearData()
     let offset = size / 2.0
 
@@ -27,7 +27,7 @@ class CubeGeometry extends Geometry {
         [offset, fixedPosition, -offset],
         [offset, fixedPosition, offset],
         [-offset, fixedPosition, offset],
-      ], true, y)
+      ], true, (y + flipNormal) % 2)
 
       // Atras y Frente
       this.insertPlane([
@@ -35,7 +35,7 @@ class CubeGeometry extends Geometry {
         [-offset, offset, fixedPosition],
         [offset, offset, fixedPosition],
         [offset, -offset, fixedPosition]
-      ], true, y)
+      ], true, (y + flipNormal) % 2)
 
       // Izquierda y Derecha
       this.insertPlane([
@@ -43,8 +43,9 @@ class CubeGeometry extends Geometry {
         [fixedPosition, -offset, offset],
         [fixedPosition, offset, offset],
         [fixedPosition, offset, -offset]
-      ], true, y)
+      ], true, (y + flipNormal) % 2)
     }
+    this.hasChanged = true
   }
 }
 

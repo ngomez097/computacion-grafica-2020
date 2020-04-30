@@ -38,10 +38,12 @@ class ObjectScene extends ObjectProperty {
    * @param {*} mesh La maya objetivo.
    */
   showWireframe (bool, mesh = 0) {
-    if (bool) {
+    if (bool && this.meshes[mesh].renderType !== Mesh.RENDER_TYPE.LINES) {
       this.meshes[mesh].renderType = Mesh.RENDER_TYPE.LINES
-    } else {
+      this.meshes[mesh].geometry.hasChanged = true
+    } else if (!bool && this.meshes[mesh].renderType !== Mesh.RENDER_TYPE.TRIANGLES) {
       this.meshes[mesh].renderType = Mesh.RENDER_TYPE.TRIANGLES
+      this.meshes[mesh].geometry.hasChanged = true
     }
   }
 

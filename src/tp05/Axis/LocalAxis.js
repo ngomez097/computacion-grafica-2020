@@ -1,4 +1,5 @@
 const mat4 = require('gl-matrix/mat4')
+const utils = require('../Utils/Utils')
 const radFactor = Math.PI / 180.0
 
 // Clase que se encarga de gestionar la rotacion global y local.
@@ -6,6 +7,7 @@ const radFactor = Math.PI / 180.0
 class LocalAxis {
   constructor () {
     this.rotation = [0.0, 0.0, 0.0]
+    this.needUpdate = true
   }
 
   /**
@@ -16,6 +18,13 @@ class LocalAxis {
       X: 0,
       Y: 1,
       Z: 2,
+    }
+  }
+
+  setRotation (newRotation) {
+    if (!utils.arraysEqual(newRotation, this.rotation)) {
+      this.rotation = [...newRotation]
+      this.needUpdate = true
     }
   }
 
@@ -35,6 +44,7 @@ class LocalAxis {
     this.rotation[0] = auxRot.x
     this.rotation[1] = auxRot.y
     this.rotation[2] = auxRot.z
+    this.needUpdate = true
   }
 
   /**
@@ -47,12 +57,9 @@ class LocalAxis {
       return
     }
     let rot = this.getAxisMatrix()
-    let localAxis = [
-      rot[axis * 4],
-      rot[axis * 4 + 1],
-      rot[axis * 4 + 2]
-    ]
+    let localAxis = this.getLocalAxis(axis)
     this.rotate(angle, rot, localAxis)
+    return this.rotation
   }
 
   /**
@@ -65,7 +72,18 @@ class LocalAxis {
       return
     }
     let rot = this.getAxisMatrix()
-    this.rotate(angle, rot, [0, 1, 0])
+    switch (axis) {
+      case LocalAxis.AXIS.X:
+        this.rotate(angle, rot, [1, 0, 0])
+        break
+      case LocalAxis.AXIS.Y:
+        this.rotate(angle, rot, [0, 1, 0])
+        break
+      case LocalAxis.AXIS.Z:
+        this.rotate(angle, rot, [0, 0, 1])
+        break
+    }
+    return this.rotation
   }
 
   /**
@@ -73,10 +91,9 @@ class LocalAxis {
    * @param {*} mat Matriz para obtener el eje, si es null se calcula la matriz con los valores guardados.
    * @param {*} axis El eje que se desea obtener
    */
-  getLocalAxis (mat, axis = LocalAxis.AXIS.X) {
-    if (mat === null) {
-      mat = this.getAxisMatrix()
-    }
+  getLocalAxis (axis = LocalAxis.AXIS.X) {
+    let mat = this.getAxisMatrix()
+
     let localAxis = [
       mat[axis * 4],
       mat[axis * 4 + 1],
@@ -89,15 +106,22 @@ class LocalAxis {
    * Funcion para obtener la matriz de rotacion.
    */
   getAxisMatrix () {
-    let rot = mat4.identity([])
-    mat4.rotateX(rot, rot, this.rotation[0] * radFactor)
-    mat4.rotateY(rot, rot, this.rotation[1] * radFactor)
-    mat4.rotateZ(rot, rot, this.rotation[2] * radFactor)
-    return rot
+    if (this.needUpdate) {
+      this.updateRotationMatrix()
+      this.needUpdate = false
+    }
+    return this.rotationMatrix
+  }
+
+  updateRotationMatrix () {
+    this.rotationMatrix = mat4.identity([])
+    mat4.rotateX(this.rotationMatrix, this.rotationMatrix, this.rotation[0] * radFactor)
+    mat4.rotateY(this.rotationMatrix, this.rotationMatrix, this.rotation[1] * radFactor)
+    mat4.rotateZ(this.rotationMatrix, this.rotationMatrix, this.rotation[2] * radFactor)
   }
 
   /**
-   * Funcion para obtener los angulos de una matriz de rotacion en el orden XYZ.
+   * Funcion para obtener los angulos de una matriz de rotacion en el orden ZYX.
    * @param {*} mat Matriz para extraer la rotacion.
    */
   GetRotation (mat) {

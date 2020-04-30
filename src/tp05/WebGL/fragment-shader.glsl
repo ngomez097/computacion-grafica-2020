@@ -31,7 +31,6 @@ uniform PointLight u_pointLights[MAX_POINT_LIGHTS];
 uniform SpotLight u_spotLights[MAX_SPOT_LIGHTS];
 uniform vec3 u_ambientLight;
 uniform vec3 u_Color;
-uniform vec3 u_SpecularColor;
 uniform vec3 u_eyes_position;
 uniform float u_ambientLightIntensity;
 uniform int u_UseNormal;
@@ -53,6 +52,7 @@ vec3 halfVector;
 float angleDir;
 float distanceLight;
 float attenuation;
+float attenuation2;
 float specular;
 PointLight pointLight;
 SpotLight spotLight;
@@ -102,6 +102,9 @@ vec3 calculatePointLights () {
       break;
     }
     pointLight = u_pointLights[i];
+    if (pointLight.intensity <= 0.0) {
+      continue;
+    }
 
     SurfaceLightDir = pointLight.pos - f_vertex_position;
     distanceLight = length(SurfaceLightDir);
@@ -112,10 +115,14 @@ vec3 calculatePointLights () {
     if (angleDir < 0.0) {
       continue;
     }
-    attenuation = clamp(pointLight.intensity / pow(distanceLight, 2.0), 0.0, 1.0);
+    attenuation = pointLight.intensity / pow(distanceLight, 2.0);
+    attenuation2 = attenuation / 200.0;
+    if (attenuation > 1.0) {
+      attenuation = pow(attenuation, 0.5);
+    }
     
-    color += u_Color * pointLight.color * angleDir * attenuation;
-    color += clamp(pow(specular, 500.0) * pointLight.color, 0.0, 1.0);
+    color += u_Color * pointLight.color * angleDir * attenuation + (pointLight.color + vec3(0.8)) * attenuation2 * attenuation;
+    color += clamp(pow(specular, 1000.0) * pointLight.color * pointLight.intensity / 100.0, 0.0, 1.0);
   }
   return color;
 }
@@ -127,6 +134,9 @@ vec3 calculateSpotLights () {
       break;
     }
     spotLight = u_spotLights[i];
+    if (spotLight.intensity <= 0.0) {
+      continue;
+    }
     
     SurfaceLightDir = spotLight.pos - f_vertex_position;
     distanceLight = length(SurfaceLightDir);
@@ -142,10 +152,15 @@ vec3 calculateSpotLights () {
     if (angleDir < 0.0) {
       continue;
     }
-    attenuation *= clamp(spotLight.intensity / pow(distanceLight, 2.0), 0.0, 1.0);
+    attenuation2 = spotLight.intensity / pow(distanceLight, 2.0);
+    attenuation *= attenuation2;
+    attenuation2 /= 200.0;
+    if (attenuation > 1.0) {
+      attenuation = pow(attenuation, 0.5);
+    }
     
-    color += u_Color * spotLight.color * angleDir * attenuation;
-    color += clamp(pow(specular, 1000.0) * attenuation * spotLight.color, 0.0, 1.0);
+    color += u_Color * spotLight.color * angleDir * attenuation + (spotLight.color + vec3(0.8)) * attenuation2;
+    color += clamp(pow(specular, 1000.0) * attenuation * spotLight.color * spotLight.intensity / 100.0, 0.0, 1.0);
   }
   return color;
 }

@@ -57,6 +57,7 @@ class ConeGeometry extends Geometry {
       default:
         this.insertNGon(botommVertex, true)
     }
+    this.hasChanged = true
   }
 }
 

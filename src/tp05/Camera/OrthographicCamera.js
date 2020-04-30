@@ -19,12 +19,12 @@ class OrthographicCamera extends Camera {
     this.far = far
   }
 
-  getProjectionMatrix () {
+  updateProjectionMatrix () {
     this.projectionMatrix = mat4.create()
     mat4.ortho(this.projectionMatrix,
       this.left, this.right, this.bottom,
       this.top, this.near, this.far)
-    return this.projectionMatrix
+    this.projectionMatrixNeedUpdate = false
   }
 }
 

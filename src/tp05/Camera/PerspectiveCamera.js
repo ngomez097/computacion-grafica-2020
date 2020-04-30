@@ -20,13 +20,17 @@ class PerspectiveCamera extends Camera {
    * @param {*} angle Angulo en grados.
    */
   setFovFromDegrees (angle) {
-    this.fov = angle * Math.PI / 180.0
+    let aux = angle * Math.PI / 180.0
+    if (aux !== this.fov) {
+      this.fov = aux
+      this.requireProyectionMatrixUpdate()
+    }
   }
 
-  getProjectionMatrix () {
+  updateProjectionMatrix () {
     this.projectionMatrix = mat4.create()
     mat4.perspective(this.projectionMatrix, this.fov, this.aspect, this.near, this.far)
-    return this.projectionMatrix
+    this.projectionMatrixNeedUpdate = false
   }
 }
 

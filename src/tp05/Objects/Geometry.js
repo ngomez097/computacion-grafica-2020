@@ -8,9 +8,13 @@ class Geometry {
   constructor (type = Geometry.TYPE['3D']) {
     this.vertices = []
     this.faces = []
-    this.wireframeFaces = []
     this.normals = []
+    this.wireframeFaces = []
     this.type = type
+    this.verticesBuffer = null
+    this.normalsBuffer = null
+    this.indexBuffer = null
+    this.hasChanged = true
   }
 
   static get TYPE () {

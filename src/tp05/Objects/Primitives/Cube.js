@@ -10,11 +10,12 @@ class Cube extends ObjectScene {
     super()
     this.size = size
     this.selectable = false
+    this.flipNormal = false
     this.meshes[0].setGeometry(new CubeGeometry(size))
   }
 
   remesh () {
-    this.meshes[0].geometry.constructCube(this.size)
+    this.meshes[0].geometry.constructCube(this.size, this.flipNormal)
   }
 }
 

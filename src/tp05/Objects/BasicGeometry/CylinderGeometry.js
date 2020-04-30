@@ -66,6 +66,7 @@ class CylinderGeometry extends Geometry {
         this.insertNGon(botommVertex, true)
         this.insertNGon(topVertex, true, true)
     }
+    this.hasChanged = true
   }
 }
 

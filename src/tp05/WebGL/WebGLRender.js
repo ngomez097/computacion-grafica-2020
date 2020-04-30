@@ -1,7 +1,7 @@
 const webGLUtil = require('./WebGLUtil')
 const PerspectiveCamera = require('../Camera/PerspectiveCamera')
 const Geometry = require('../Objects/Geometry')
-const Ray = require('../Objects/Primitives/Ray')
+// const Ray = require('../Objects/Primitives/Ray')
 const Mesh = require('../Objects/Mesh')
 
 const mat4 = require('gl-matrix/mat4')
@@ -25,6 +25,7 @@ class WebGLRender {
         break
       }
     }
+    this.shaderAttributes = []
     this.initWebGL()
   }
 
@@ -47,6 +48,24 @@ class WebGLRender {
     this._gl.enable(this._gl.DEPTH_TEST)
     this._gl.enable(this._gl.CULL_FACE)
     this._gl.cullFace(this._gl.BACK)
+
+    // Obteniendo las ubicaciones de las variables.
+    this.shaderAttributes['a_VertexPosition'] = this._gl.getAttribLocation(this.prg, 'a_VertexPosition')
+    this.shaderAttributes['a_VertexNormal'] = this._gl.getAttribLocation(this.prg, 'a_VertexNormal')
+
+    webGLUtil.storeUniformsLocation(this._gl, this.prg, this.shaderAttributes, [
+      'u_MVMatrix', 'u_MVInverseTransposeMatrix', 'u_VMatrix', 'u_PMatrix', 'u_ambientLight',
+      'u_Color', 'u_eyes_position', 'u_ambientLightIntensity', 'u_UseNormal',
+      'u_numPointLights', 'u_numSpotLights', 'u_dirLight.dir', 'u_dirLight.color', 'u_dirLight.intensity'
+    ])
+
+    for (let i = 0; i < 32; i++) {
+      webGLUtil.storeUniformsLocation(this._gl, this.prg, this.shaderAttributes, [
+        `u_pointLights[${i}].pos`, `u_pointLights[${i}].color`, `u_pointLights[${i}].intensity`,
+        `u_spotLights[${i}].angle`, `u_spotLights[${i}].pos`, `u_spotLights[${i}].color`,
+        `u_spotLights[${i}].intensity`, `u_spotLights[${i}].dir`
+      ])
+    }
   }
 
   initShader (pathShader, type) {
@@ -63,63 +82,6 @@ class WebGLRender {
     }
 
     this._gl.attachShader(this.prg, shader)
-  }
-
-  /** Funcion que recibe un arraglo de vertices 2D float
-   * y los establece en el buffer
-   */
-  setVertexBuffer2D (vertexArray) {
-    this.vertex_buffer = this._gl.createBuffer()
-    this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this.vertex_buffer)
-
-    this._gl.bufferData(this._gl.ARRAY_BUFFER,
-      new Float32Array(vertexArray),
-      this._gl.STATIC_DRAW)
-
-    webGLUtil.bindAttributeArrayFloat(this._gl, this.prg, 'a_VertexPosition', 2)
-    // Desvinculacion del buffer
-    this._gl.bindBuffer(this._gl.ARRAY_BUFFER, null)
-  }
-
-  setVertexBuffer3D (vertexArray) {
-    this.vertex_buffer = this._gl.createBuffer()
-    this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this.vertex_buffer)
-
-    this._gl.bufferData(this._gl.ARRAY_BUFFER,
-      new Float32Array(vertexArray),
-      this._gl.STATIC_DRAW)
-
-    webGLUtil.bindAttributeArrayFloat(this._gl, this.prg, 'a_VertexPosition', 3)
-    // Desvinculacion del buffer
-    this._gl.bindBuffer(this._gl.ARRAY_BUFFER, null)
-  }
-
-  setNormal3D (normalArray) {
-    this.vertex_buffer = this._gl.createBuffer()
-    this._gl.bindBuffer(this._gl.ARRAY_BUFFER, this.vertex_buffer)
-
-    this._gl.bufferData(this._gl.ARRAY_BUFFER,
-      new Float32Array(normalArray),
-      this._gl.STATIC_DRAW)
-
-    webGLUtil.bindAttributeArrayFloat(this._gl, this.prg, 'a_VertexNormal', 3)
-    // Desvinculacion del buffer
-    this._gl.bindBuffer(this._gl.ARRAY_BUFFER, null)
-  }
-
-  /** Funcion que recibe un arraglo de indices 2D int
-   * y los establece en el buffer
-   */
-  setIndexBuffer (indexArray) {
-    this.index_buffer = this._gl.createBuffer()
-    this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, this.index_buffer)
-
-    this._gl.bufferData(this._gl.ELEMENT_ARRAY_BUFFER,
-      new Uint16Array(indexArray),
-      this._gl.STATIC_DRAW)
-
-    // Desvinculacion del buffer
-    this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, null)
   }
 
   drawElementsTriangle (indexArray) {
@@ -228,6 +190,13 @@ class WebGLRender {
             rayToPlane = []
             vec3.sub(rayToPlane, vertices[0], camera.eye)
 
+            /* let ray = new Ray(vertices[0], normal, 0.5, [1.0, 1.0, 1.0])
+            scene.addObjects(ray)
+            ray = new Ray(vertices[1], normal, 0.5, [1.0, 1.0, 1.0])
+            scene.addObjects(ray)
+            ray = new Ray(vertices[2], normal, 0.5, [1.0, 1.0, 1.0])
+            scene.addObjects(ray) */
+
             vp = vec3.dot(rayDir, normal)
             if (vp > -1e-16) {
               continue
@@ -282,55 +251,69 @@ class WebGLRender {
     let vertices
     let faces
     let normals
+    let buffer
 
     // Se establece la matriz de proyeccion
-    let PMatrix = camera.getProjectionMatrix()
-    webGLUtil.setUniformLocation(this._gl, this.prg, 'u_PMatrix', PMatrix)
+    if (camera.PMNeedRenderUpdate) {
+      let PMatrix = camera.getProjectionMatrix()
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_PMatrix'], PMatrix)
+      camera.PMNeedRenderUpdate = false
+    }
 
     // Se establece las propiedades de la camara
-    let VMatrix = camera.getViewMatrix()
-    webGLUtil.setUniformLocation(this._gl, this.prg, 'u_VMatrix', VMatrix)
-    webGLUtil.setUniformLocation(this._gl, this.prg, 'u_eyes_position', camera.eye)
+    if (camera.VMNeedRenderUpdate) {
+      let VMatrix = camera.getViewMatrix()
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_VMatrix'], VMatrix)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_eyes_position'], camera.eye)
+      camera.VMNeedRenderUpdate = false
+    }
 
     /* Se establece las luces. */
     // Luz de ambiente.
-    webGLUtil.setUniformLocation(this._gl, this.prg, 'u_ambientLight', scene.ambientLight)
-    webGLUtil.setUniformLocation(this._gl, this.prg, 'u_ambientLightIntensity', scene.ambientLightIntensity)
+    if (scene.ambientLight !== null && scene.ambientLight.needRenderUpdate) {
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_ambientLight'], scene.ambientLight.color)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_ambientLightIntensity'], scene.ambientLight.intensity)
+    }
 
     // Luz directa.
-    if (scene.dirLight !== null) {
-      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_dirLight.dir', scene.dirLight.direction)
-      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_dirLight.color', scene.dirLight.color)
-      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_dirLight.intensity', scene.dirLight.intensity)
+    if (scene.dirLight !== null && scene.dirLight.needRenderUpdate) {
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_dirLight.dir'], scene.dirLight.direction)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_dirLight.color'], scene.dirLight.color)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_dirLight.intensity'], scene.dirLight.intensity)
+      scene.dirLight.needRenderUpdate = false
     }
 
     // Luces puntuales
     let numLights = 0
     for (let pointLight of scene.pointLights) {
-      if (pointLight.enable === false) {
+      if (pointLight.needRenderUpdate === false) {
+        numLights++
         continue
       }
-      webGLUtil.setUniformLocation(this._gl, this.prg, `u_pointLights[${numLights}].pos`, pointLight.position)
-      webGLUtil.setUniformLocation(this._gl, this.prg, `u_pointLights[${numLights}].color`, pointLight.color)
-      webGLUtil.setUniformLocation(this._gl, this.prg, `u_pointLights[${numLights}].intensity`, pointLight.intensity)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes[`u_pointLights[${numLights}].pos`], pointLight.position)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes[`u_pointLights[${numLights}].color`], pointLight.color)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes[`u_pointLights[${numLights}].intensity`], pointLight.intensity * pointLight.enable)
+      pointLight.needRenderUpdate = false
       numLights++
     }
-    webGLUtil.setUniformLocation(this._gl, this.prg, 'u_numPointLights', numLights, true)
+    webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_numPointLights'], numLights, true)
 
     // Luces Spot
     numLights = 0
     for (let spotLight of scene.spotLights) {
-      if (spotLight.enable === false) {
+      if (spotLight.needRenderUpdate === false) {
+        numLights++
         continue
       }
-      webGLUtil.setUniformLocation(this._gl, this.prg, `u_spotLights[${numLights}].pos`, spotLight.position)
-      webGLUtil.setUniformLocation(this._gl, this.prg, `u_spotLights[${numLights}].color`, spotLight.color)
-      webGLUtil.setUniformLocation(this._gl, this.prg, `u_spotLights[${numLights}].intensity`, spotLight.intensity)
-      webGLUtil.setUniformLocation(this._gl, this.prg, `u_spotLights[${numLights}].dir`, spotLight.direction)
-      webGLUtil.setUniformLocation(this._gl, this.prg, `u_spotLights[${numLights}].angle`, spotLight.angle)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes[`u_spotLights[${numLights}].angle`], spotLight.angle)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes[`u_spotLights[${numLights}].pos`], spotLight.position)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes[`u_spotLights[${numLights}].color`], spotLight.color)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes[`u_spotLights[${numLights}].intensity`], spotLight.intensity * spotLight.enable)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes[`u_spotLights[${numLights}].dir`], spotLight.direction)
+      spotLight.needRenderUpdate = false
       numLights++
     }
-    webGLUtil.setUniformLocation(this._gl, this.prg, 'u_numSpotLights', numLights, true)
+    webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_numSpotLights'], numLights, true)
 
     // Dibujar los objetos
     for (let object of scene.objects) {
@@ -339,8 +322,8 @@ class WebGLRender {
       }
       ModelMatrix = object.getModelMatrix()
       InvertseTransposeModelMatrix = object.getInverseTransposeMatrix(ModelMatrix)
-      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_MVMatrix', ModelMatrix)
-      webGLUtil.setUniformLocation(this._gl, this.prg, 'u_MVInverseTransposeMatrix', InvertseTransposeModelMatrix)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_MVMatrix'], ModelMatrix)
+      webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_MVInverseTransposeMatrix'], InvertseTransposeModelMatrix)
 
       // Dibujando cada malla del objeto.
       let meshes = [...object.meshes]
@@ -349,27 +332,41 @@ class WebGLRender {
       }
 
       for (let mesh of meshes) {
-        vertices = mesh.geometry.vertices
-        normals = mesh.geometry.normals
-
         if (mesh.renderType === Mesh.RENDER_TYPE.LINES) {
           faces = mesh.geometry.wireframeFaces
         } else {
           faces = mesh.geometry.faces
         }
 
-        if (mesh.geometry.type === Geometry.TYPE['2D']) {
-          this.setVertexBuffer2D(vertices)
+        if (mesh.geometry.hasChanged) {
+          vertices = mesh.geometry.vertices
+          normals = mesh.geometry.normals
+          if (mesh.geometry.type === Geometry.TYPE['2D']) {
+            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, vertices, this.shaderAttributes['a_VertexPosition'], 2)
+            mesh.geometry.verticesBuffer = buffer
+          } else {
+            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, vertices, this.shaderAttributes['a_VertexPosition'])
+            mesh.geometry.verticesBuffer = buffer
+
+            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, normals, this.shaderAttributes['a_VertexNormal'])
+            mesh.geometry.normalsBuffer = buffer
+          }
+          this.index_buffer = webGLUtil.setNewIndexBuffer(this._gl, faces)
+          mesh.geometry.indexBuffer = this.index_buffer
+
+          mesh.geometry.hasChanged = false
         } else {
-          this.setVertexBuffer3D(vertices)
-          this.setNormal3D(normals)
+          buffer = mesh.geometry.verticesBuffer
+          webGLUtil.bindFloatArrayBuffer(this._gl, buffer, this.shaderAttributes['a_VertexPosition'])
+
+          buffer = mesh.geometry.normalsBuffer
+          webGLUtil.bindFloatArrayBuffer(this._gl, buffer, this.shaderAttributes['a_VertexNormal'])
+
+          this.index_buffer = mesh.geometry.indexBuffer
         }
 
-        this.setIndexBuffer(faces)
-
-        webGLUtil.setUniformLocation(this._gl, this.prg, 'u_Color', mesh.material)
-        webGLUtil.setUniformLocation(this._gl, this.prg, 'u_SpecularColor', mesh.specularColor)
-        webGLUtil.setUniformLocation(this._gl, this.prg, 'u_UseNormal', mesh.useNormal)
+        webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_Color'], mesh.material)
+        webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_UseNormal'], mesh.useNormal)
 
         if (mesh.clearDepth) {
           this._gl.disable(this._gl.DEPTH_TEST)

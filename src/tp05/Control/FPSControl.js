@@ -39,8 +39,10 @@ class FPSControl {
     }
     if (keyPressed[' ']) {
       camera.eye[1] += this.fpsConf.vel
+      camera.requireViewMatrixUpdate()
     } else if (keyPressed.control) {
       camera.eye[1] -= this.fpsConf.vel
+      camera.requireViewMatrixUpdate()
     }
   }
 
@@ -61,10 +63,14 @@ class FPSControl {
     } else if (this.fpsConf.rpy[1] - auxY < -89.0) {
       this.fpsConf.rpy[1] = -89.0
     } else {
-      camera.addPitch(-auxY)
-      this.fpsConf.rpy[1] -= auxY
+      if (auxY !== 0) {
+        camera.addPitch(-auxY)
+        this.fpsConf.rpy[1] -= auxY
+      }
     }
-    camera.addYaw(-auxX)
+    if (auxX !== 0) {
+      camera.addYaw(-auxX)
+    }
   }
 }
 

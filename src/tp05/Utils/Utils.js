@@ -31,9 +31,43 @@ const toDegres = function (angle) {
   return angle * 180.0 / Math.PI
 }
 
+const arraysEqual = function (array1, array2) {
+  if (array1.length !== array2.length) {
+    return false
+  }
+  for (let i = 0; i < array1.length; i++) {
+    if (array1[i] !== array2[i]) {
+      return false
+    }
+  }
+  return true
+}
+
+const copyArrayValues = function (array1, array2) {
+  if (array1.length !== array2.length) {
+    return
+  }
+  for (let i = 0; i < array1.length; i++) {
+    array1[i] = array2[i]
+  }
+}
+
+const clamp = function (value, min, max) {
+  if (value < min) {
+    return min
+  }
+  if (value > max) {
+    return max
+  }
+  return value
+}
+
 module.exports = {
   map,
   distance,
   getFovX,
-  toRadian
+  toRadian,
+  arraysEqual,
+  copyArrayValues,
+  clamp
 }

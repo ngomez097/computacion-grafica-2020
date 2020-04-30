@@ -1,9 +1,10 @@
 const Geometry = require('./Geometry')
+const utils = require('../Utils/Utils')
 
 class Mesh {
   constructor (material = [1.0, 1.0, 1.0], renderType = Mesh.RENDER_TYPE.TRIANGLES) {
     this.geometry = new Geometry()
-    this.material = material
+    this.material = [...material]
     this.renderType = renderType
     this.useNormal = true
     this.clearDepth = false
@@ -22,6 +23,12 @@ class Mesh {
    */
   setGeometry (geometry) {
     this.geometry = geometry
+  }
+
+  setColor (newColor) {
+    if (!utils.arraysEqual(this.material, newColor)) {
+      this.material = [...newColor]
+    }
   }
 
   /**
