@@ -26,19 +26,33 @@ struct SpotLight {
   vec3 color;
 };
 
+struct Material {
+  vec3 u_Color;
+  sampler2D u_textureDiffuse;
+  sampler2D u_textureNormal;
+  sampler2D u_textureAO;
+  sampler2D u_textureRoughness;
+  int u_useTexture;
+  float u_normalStrength;
+  int u_UseNormal;
+};
+
 uniform DirLight u_dirLight;
 uniform PointLight u_pointLights[MAX_POINT_LIGHTS];
 uniform SpotLight u_spotLights[MAX_SPOT_LIGHTS];
 uniform vec3 u_ambientLight;
-uniform vec3 u_Color;
 uniform vec3 u_eyes_position;
 uniform float u_ambientLightIntensity;
-uniform int u_UseNormal;
 uniform int u_numPointLights;
 uniform int u_numSpotLights;
+uniform Material material;
+
 
 varying vec3 f_normals;
+varying vec3 f_tangent;
+varying vec3 f_bitangent;
 varying vec3 f_vertex_position;
+varying vec2 f_textureCoordinates;
 
 vec3 fixedNormal;
 vec3 SurfaceLightDir;
@@ -48,6 +62,9 @@ vec3 dirColor;
 vec3 pointColor;
 vec3 spotColor;
 vec3 halfVector;
+vec3 objColor;
+vec3 objNormal;
+float objRoughness;
 
 float angleDir;
 float distanceLight;
@@ -62,19 +79,40 @@ vec3 calculatePointLights();
 vec3 calculateSpotLights();
 
 void main(void) {
-  if (u_UseNormal == 1) {
-    fixedNormal = normalize(f_normals);
+  if (material.u_useTexture == 1) {
+    objColor = texture2D(material.u_textureDiffuse, f_textureCoordinates).rgb;
+    objColor *= texture2D(material.u_textureAO, f_textureCoordinates).rgb;
+    objNormal = texture2D(material.u_textureNormal, f_textureCoordinates).rgb;
+    objNormal = normalize((objNormal * 2.0) - vec3(1.0));
+    objNormal = normalize(
+      normalize(f_tangent) * objNormal.x +
+      normalize(f_bitangent) * objNormal.y +
+      normalize(f_normals) * objNormal.z * mix(50.0, 1.0, material.u_normalStrength)
+    );
+    objRoughness = 1.0 - texture2D(material.u_textureRoughness, f_textureCoordinates).r;
+  } else {
+    objColor = material.u_Color;
+  }
+  if (material.u_UseNormal == 1) {
+
+    if (material.u_useTexture == 1) {
+      fixedNormal = objNormal;
+    } else {
+      fixedNormal = normalize(f_normals);
+    }
     angleDir = dot(fixedNormal,normalize(-u_dirLight.dir));
     angleDir = max(angleDir, 0.0);
     SurfaceEyeDir = normalize(u_eyes_position - f_vertex_position);
 
+   
+
     // Luz direccional.
-    dirColor = u_Color * angleDir;
+    dirColor = objColor * angleDir;
     dirColor *= u_dirLight.color;
     dirColor *= u_dirLight.intensity;
 
     // Luz ambiente
-    ambienColor = u_Color * u_ambientLight;
+    ambienColor = objColor * u_ambientLight;
     ambienColor *= u_ambientLightIntensity;
 
     // Luces puntuales.
@@ -90,8 +128,10 @@ void main(void) {
     // Luz Total.
     gl_FragColor.rgb = ambienColor + dirColor + pointColor + spotColor;
     gl_FragColor.a = 1.0;
+    //gl_FragColor.rgb = normalize(fixedNormal * 0.5 + 1.0);
+    //gl_FragColor.rgb = normalize(f_bitangent*0.5 + 1.0);
   } else {
-    gl_FragColor = vec4(u_Color, 1.0);
+    gl_FragColor = vec4(objColor, 1.0);
   }
 }
 
@@ -116,13 +156,14 @@ vec3 calculatePointLights () {
       continue;
     }
     attenuation = pointLight.intensity / pow(distanceLight, 2.0);
-    attenuation2 = attenuation / 200.0;
+    attenuation2 = attenuation / 50.0;
+    attenuation = clamp(attenuation, 0.0, 1.0);
     if (attenuation > 1.0) {
       attenuation = pow(attenuation, 0.5);
     }
     
-    color += u_Color * pointLight.color * angleDir * attenuation + (pointLight.color + vec3(0.8)) * attenuation2;
-    color += clamp(pow(specular, 1000.0) * pointLight.color * pointLight.intensity / 100.0, 0.0, 1.0);
+    color += (objColor * pointLight.color  * attenuation + (pointLight.color + vec3(0.8)) * attenuation2) * angleDir;
+    color += objRoughness * clamp(pow(specular, 1000.0) * attenuation * pointLight.color * pointLight.intensity / 100.0, 0.0, 1.0);
   }
   return color;
 }
@@ -152,15 +193,14 @@ vec3 calculateSpotLights () {
     if (angleDir < 0.0) {
       continue;
     }
-    attenuation2 = spotLight.intensity / pow(distanceLight, 2.0);
-    attenuation *= attenuation2;
-    attenuation2 /= 200.0;
+    attenuation *= spotLight.intensity / pow(distanceLight, 2.0);
+    attenuation2 = attenuation / 50.0;
     if (attenuation > 1.0) {
       attenuation = pow(attenuation, 0.5);
     }
     
-    color += u_Color * spotLight.color * angleDir * attenuation + (spotLight.color + vec3(0.8)) * attenuation2;
-    color += clamp(pow(specular, 1000.0) * attenuation * spotLight.color * spotLight.intensity / 100.0, 0.0, 1.0);
+    color += (objColor * spotLight.color * attenuation + (spotLight.color + vec3(0.8)) * attenuation2) * angleDir;
+    color += objRoughness * clamp(pow(specular, 1000.0) * attenuation * 0.01 * spotLight.color * spotLight.intensity / 100.0, 0.0, 1.0);
   }
   return color;
 }

@@ -1,6 +1,7 @@
 const Mesh = require('./Mesh')
 const ObjectProperty = require('./ObjectProperty')
 const Axis = require('../Axis/Axis')
+const Material = require('./Material/Material')
 
 class ObjectScene extends ObjectProperty {
   /**
@@ -9,13 +10,11 @@ class ObjectScene extends ObjectProperty {
    */
   constructor (renderType = Mesh.RENDER_TYPE.TRIANGLES, ...meshes) {
     super()
-    this.meshes = []
-
     let mesh = new Mesh(
-      [0.8, 0.8, 0.8],
+      new Material(),
       renderType
     )
-    this.meshes.push(mesh)
+    this.meshes = [mesh]
     this.enableRender = true
     this.showLocalAxis = false
     this.localAxisRepresentation = new Axis()

@@ -1,4 +1,5 @@
 const Geometry = require('../Geometry')
+const Vec3 = require('../../Utils/Vec3')
 const cos = Math.cos
 const sin = Math.sin
 
@@ -23,18 +24,18 @@ class ConeGeometry extends Geometry {
   constructCone (heigth = 1, baseVertexCount = 3, radius = 1, shadeSmooth = false) {
     this.clearData()
     let offsetY = heigth / 2.0
-    let topVertex = [0, offsetY, 0]
-    let v1 = []
-    let v2 = []
+    let topVertex = new Vec3(0, offsetY, 0)
+    let v1
+    let v2
     let dt = 2 * Math.PI / baseVertexCount
     let angle
     let botommVertex = []
 
     for (let i = 0; i < baseVertexCount; i++) {
       angle = dt * i
-      v1 = [cos(angle) * radius, -offsetY, sin(angle) * radius]
+      v1 = new Vec3(cos(angle) * radius, -offsetY, sin(angle) * radius)
       angle = dt * (i + 1)
-      v2 = [cos(angle) * radius, -offsetY, sin(angle) * radius]
+      v2 = new Vec3(cos(angle) * radius, -offsetY, sin(angle) * radius)
 
       this.insertTriangle([
         topVertex, v2, v1

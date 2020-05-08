@@ -1,3 +1,5 @@
+const Camera = require('../Camera/Camera')
+
 class FPSControl {
   /**
    * Clase para manejar los controles del teclado de la camara.
@@ -16,7 +18,15 @@ class FPSControl {
     }
   }
 
+  /**
+   * @param {*} keyPressed
+   * @param {Camera} camera
+   */
   updateCamera (keyPressed, camera) {
+    if (!(camera instanceof Camera)) {
+      console.error('camera is not Camera')
+      return
+    }
     if (keyPressed.shift) {
       this.fpsConf.vel = this.fpsConf.maxVel
     } else {
@@ -38,20 +48,24 @@ class FPSControl {
       camera.addRoll(-0.5)
     }
     if (keyPressed[' ']) {
-      camera.eye[1] += this.fpsConf.vel
+      camera.eye.y += this.fpsConf.vel
       camera.requireViewMatrixUpdate()
     } else if (keyPressed.control) {
-      camera.eye[1] -= this.fpsConf.vel
+      camera.eye.y -= this.fpsConf.vel
       camera.requireViewMatrixUpdate()
     }
   }
 
   /**
    * Funcion para mover el pitch y yaw de la camara con el mouse.
-   * @param {*} camera La camara a mover.
+   * @param {Camera} camera La camara a mover.
    * @param {*} event El evento del click del mouse.
    */
   onMouseMove (camera, event) {
+    if (!(camera instanceof Camera)) {
+      console.error('camera is not Camera')
+      return
+    }
     let auxX
     let auxY
 

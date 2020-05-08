@@ -1,10 +1,11 @@
 const Light = require('./Light')
+const Vec3 = require('../Utils/Vec3')
 
 class PointLight extends Light {
   constructor (
-    position = [0.0, 0.0, 0.0],
+    position = new Vec3(0.0),
     intensity = 1.0,
-    color = [1.0, 1.0, 1.0],
+    color = new Vec3(1.0),
     classRepresentation = null
   ) {
     super(color, position, classRepresentation, intensity)

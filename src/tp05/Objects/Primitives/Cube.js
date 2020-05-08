@@ -6,12 +6,12 @@ class Cube extends ObjectScene {
    * @param {*} size Tamaño de los lados del cubo.
    */
   constructor (
-    size = 1) {
+    size = 1, flipNormal = false) {
     super()
     this.size = size
     this.selectable = false
-    this.flipNormal = false
-    this.meshes[0].setGeometry(new CubeGeometry(size))
+    this.flipNormal = flipNormal
+    this.meshes[0].geometry = new CubeGeometry(size, flipNormal)
   }
 
   remesh () {

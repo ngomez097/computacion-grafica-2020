@@ -1,5 +1,6 @@
-const utils = require('../Utils/Utils')
-const vec3 = require('../Utils/vec3')
+const Vec3 = require('../Utils/Vec3')
+// eslint-disable-next-line no-unused-vars
+const Vec2 = require('../Utils/Vec2')
 
 class Geometry {
   /**
@@ -10,10 +11,15 @@ class Geometry {
     this.faces = []
     this.normals = []
     this.wireframeFaces = []
+    this.coordinates = []
+    this.tangents = []
     this.type = type
     this.verticesBuffer = null
     this.normalsBuffer = null
     this.indexBuffer = null
+    this.coordinatesBuffer = null
+    this.tangentsBuffer = null
+    this.textureHasChanged = true
     this.hasChanged = true
   }
 
@@ -26,7 +32,7 @@ class Geometry {
 
   /**
    * Funcion que agrega vertices al arreglo de vertices y busca si ya esta insertado.
-   * @param {Array} vertices Un arreglo de vertices con el formato [x, y, z].
+   * @param {Array<Vec3>} vertices Un arreglo de vertices con el formato [x, y, z].
    * @param {Boolean} duplicated Si se permite tener vertices duplicados.
    * @returns Un arreglo que contiene los indices de los vertices insertados.
    */
@@ -39,9 +45,7 @@ class Geometry {
       if (duplicated !== undefined && !duplicated) {
         // Buscando duplicados
         for (i = auxIndex - 1; i >= 0; i -= 1) {
-          if (utils.distance(vertice,
-            this.getVertices(i)) < 0.01
-          ) {
+          if (vertice.distance(this.getVertice(i)) < 0.01) {
             index.push(i)
             found = true
             break
@@ -53,12 +57,10 @@ class Geometry {
         }
       }
 
-      for (let component of vertice) {
-        this.vertices.push(component)
-      }
+      this.vertices.push(...vertice.toArray())
 
       index.push(auxIndex)
-      auxIndex += 1
+      auxIndex++
     }
     return index
   }
@@ -83,32 +85,45 @@ class Geometry {
   }
 
   /**
+   * Funcion para obtener un vertice.
+   * @param  {Number} index El indice del vertice
+   */
+  getVertice (index) {
+    let vertice
+    let fixIndex
+    vertice = new Vec3()
+    fixIndex = index * this.type
+    vertice.x = this.vertices[fixIndex]
+    vertice.y = this.vertices[++fixIndex]
+    vertice.z = this.vertices[++fixIndex]
+
+    return vertice
+  }
+
+  /**
    * Funcion para obtener los vertices.
-   * @param  {...any} index Los indices para obtener los vertices.
+   * @param  {...Number} index Los indices para obtener los vertices.
    */
   getVertices (...index) {
     let vertices = []
     let vertice
     let fixIndex
     for (let i of index) {
-      vertice = []
+      vertice = new Vec3()
       fixIndex = i * this.type
-      for (let i = fixIndex; i < fixIndex + this.type; i++) {
-        vertice.push(this.vertices[i])
-      }
+      vertice.x = this.vertices[fixIndex]
+      vertice.y = this.vertices[++fixIndex]
+      vertice.z = this.vertices[++fixIndex]
       vertices.push(vertice)
     }
 
-    if (vertices.length === 1) {
-      return vertices[0]
-    }
     return vertices
   }
 
   /**
    * Funcion para agregar normales a los vertices.
-   * @param {*} index Arreglo que trae los indices de los vertices a cuales corresponde la normal.
-   * @param  {...any} normals Arreglo con las normales.
+   * @param {Array<Number>} index Arreglo que trae los indices de los vertices a cuales corresponde la normal.
+   * @param  {...Vec3} normals Arreglo con las normales.
    */
   addNormals (index, ...normals) {
     if (index.length !== normals.length) {
@@ -120,15 +135,15 @@ class Geometry {
       let auxIndex = index[i] * 3
 
       if (this.normals[auxIndex] !== undefined) {
-        normal[0] += this.normals[auxIndex]
-        normal[1] += this.normals[auxIndex + 1]
-        normal[2] += this.normals[auxIndex + 2]
+        normal.x += this.normals[auxIndex]
+        normal.y += this.normals[auxIndex + 1]
+        normal.z += this.normals[auxIndex + 2]
 
-        normal = vec3.normalize(normal)
+        normal.normalize()
       }
-      this.normals[auxIndex] = normal[0]
-      this.normals[auxIndex + 1] = normal[1]
-      this.normals[auxIndex + 2] = normal[2]
+      this.normals[auxIndex] = normal.x
+      this.normals[auxIndex + 1] = normal.y
+      this.normals[auxIndex + 2] = normal.z
     }
 
     return true
@@ -136,25 +151,24 @@ class Geometry {
 
   /**
    * Funcion para agregar normales a los vertices.
-   * @param {*} index Arreglo que trae los indices de los vertices a cuales corresponde la normal.
-   * @param {*} normal La normal para los vertices.
+   * @param {Array<Number>} index Arreglo que trae los indices de los vertices a cuales corresponde la normal.
+   * @param {Vec3} normal La normal para los vertices.
    */
   setNormal (index, normal) {
     let auxNormal
     for (let i = 0; i < index.length; i++) {
       let auxIndex = index[i] * 3
-      auxNormal = [normal[0], normal[1], normal[2]]
-
+      auxNormal = new Vec3().copy(normal)
       if (this.normals[auxIndex] !== undefined) {
-        auxNormal[0] += this.normals[auxIndex]
-        auxNormal[1] += this.normals[auxIndex + 1]
-        auxNormal[2] += this.normals[auxIndex + 2]
+        auxNormal.x += this.normals[auxIndex]
+        auxNormal.y += this.normals[auxIndex + 1]
+        auxNormal.z += this.normals[auxIndex + 2]
 
-        auxNormal = vec3.normalize(auxNormal)
+        auxNormal.normalize()
       }
-      this.normals[auxIndex] = auxNormal[0]
-      this.normals[auxIndex + 1] = auxNormal[1]
-      this.normals[auxIndex + 2] = auxNormal[2]
+      this.normals[auxIndex] = auxNormal.x
+      this.normals[auxIndex + 1] = auxNormal.y
+      this.normals[auxIndex + 2] = auxNormal.z
     }
 
     return true
@@ -162,18 +176,19 @@ class Geometry {
 
   /**
    * Funcion para obtener los vertices.
-   * @param  {...any} index Los indices para obtener los vertices.
+   * @param  {Array<Number>} index Los indices para obtener los vertices.
    */
-  getNormals (...index) {
+  getNormals (index) {
     let normals = []
     let normal
     let fixIndex
     for (let i of index) {
-      normal = []
       fixIndex = i * this.type
-      for (let i = fixIndex; i < fixIndex + this.type; i++) {
-        normal.push(this.normals[i])
-      }
+      normal = new Vec3(
+        this.normals[fixIndex],
+        this.normals[++fixIndex],
+        this.normals[++fixIndex],
+      )
       normals.push(normal)
     }
 
@@ -191,15 +206,18 @@ class Geometry {
     this.faces = []
     this.normals = []
     this.wireframeFaces = []
+    this.coordinates = []
+    this.tangents = []
+    this.hasChanged = true
   }
 
   /**
    * Funcion que inserta una linea a la geometria.
-   * @param {Array} vertices: Se espera que se manden exactamente 3 vertices.
+   * @param {Array<Vec3>} vertices: Se espera que se manden exactamente 3 vertices.
    * @param {Boolean} duplicated: si se duplica el vertice.
    * @param {Boolean} flipNormal: si se dibuja la normal alrevez.
    */
-  insertLine (vertices, duplicated = false) {
+  insertLine (vertices, duplicated = true) {
     if (vertices.length !== 2) {
       return
     }
@@ -212,7 +230,7 @@ class Geometry {
 
   /**
    * Funcion que inserta un triangulo a la geometria.
-   * @param {Array} vertices: Se espera que se manden exactamente 3 vertices.
+   * @param {Array<Vec3>} vertices: Se espera que se manden exactamente 3 vertices.
    * @param {Boolean} duplicated: si se duplica el vertice.
    * @param {Boolean} flipNormal: si se dibuja la normal alrevez.
    */
@@ -227,12 +245,12 @@ class Geometry {
       this.addFaces(
         [index[0], index[2], index[1]]
       )
-      normal = vec3.normals(vertices[0], vertices[2], vertices[1])
+      normal = Vec3.normals(vertices[0], vertices[2], vertices[1])
     } else {
       this.addFaces(
         [index[0], index[1], index[2]]
       )
-      normal = vec3.normals(vertices[0], vertices[1], vertices[2])
+      normal = Vec3.normals(vertices[0], vertices[1], vertices[2])
     }
 
     this.setNormal(
@@ -243,11 +261,12 @@ class Geometry {
 
   /**
    * Funcion que inserta un plano a la geometria.
-   * @param {Array} vertices Se espera que se manden exactamente 4 vertices.
+   * @param {Array<Vec3>} vertices Se espera que se manden exactamente 4 vertices.
    * @param {Boolean} duplicated: si se duplica el vertice.
    * @param {Boolean} flipNormal: si se dibuja la normal alrevez.
+   * @param {Number} uvScale: la escala de la UV para la textura.
    */
-  insertPlane (vertices, duplicated = false, flipNormal = false) {
+  insertPlane (vertices, duplicated = false, flipNormal = false, uvScale = 1.0) {
     if (vertices.length !== 4) {
       return
     }
@@ -259,24 +278,47 @@ class Geometry {
         [index[0], index[2], index[1]],
         [index[0], index[3], index[2]]
       )
-      normal = vec3.normals(vertices[0], vertices[2], vertices[1])
+      normal = Vec3.normals(vertices[0], vertices[2], vertices[1])
     } else {
       this.addFaces(
         [index[0], index[1], index[2]],
         [index[0], index[2], index[3]]
       )
-      normal = vec3.normals(vertices[0], vertices[1], vertices[2])
+      normal = Vec3.normals(vertices[0], vertices[1], vertices[2])
     }
 
     this.setNormal(
       [index[0], index[1], index[2], index[3]],
       normal
     )
+
+    let edges
+    let deltaUV
+    let uvs = [
+      new Vec2(0, 0),
+      new Vec2(uvScale, 0),
+      new Vec2(uvScale, uvScale),
+      new Vec2(0, uvScale)
+    ]
+
+    edges = [vertices[1].sub(vertices[0]), vertices[2].sub(vertices[0])]
+    deltaUV = [uvs[1].sub(uvs[0]), uvs[2].sub(uvs[0])]
+
+    let r = 1.0 / (deltaUV[0].x * deltaUV[1].y - deltaUV[0].y * deltaUV[1].x)
+    let tangent = (edges[0].scale(deltaUV[1].y)).sub(edges[1].scale(deltaUV[0].y)).scale(r)
+    if (!flipNormal) {
+      tangent.invert()
+    }
+    this.setCoordinates(
+      [index[0], index[1], index[2], index[3]],
+      uvs,
+      tangent
+    )
   }
 
   /**
    * Funcion para insertar una cara con mas de 5 vertices, combierte la cara en triangulos
-   * @param {Array<Array>} vertices Es un arreglo de vertices.
+   * @param {Array<Vec3>} vertices Es un arreglo de vertices.
    * @param {Boolean} duplicated: si se duplica el vertice.
    * @param {Boolean} flipNormal: si se dibuja la normal alrevez.
    */
@@ -329,6 +371,24 @@ class Geometry {
   }
 
   /**
+   * @param {Array<Number>} indexs
+   * @param {Array<Vec2>} coordinates
+   * @param {Vec3} tangent
+   */
+  setCoordinates (indexs, coordinates, tangent) {
+    for (let i = 0; i < indexs.length; i++) {
+      this.coordinates[indexs[i] * 2] = coordinates[i].x
+      this.coordinates[indexs[i] * 2 + 1] = coordinates[i].y
+
+      if (tangent) {
+        this.tangents[indexs[i] * 3] = tangent.x
+        this.tangents[indexs[i] * 3 + 1] = tangent.y
+        this.tangents[indexs[i] * 3 + 2] = tangent.z
+      }
+    }
+  }
+
+  /**
    * Funcion para realizar una copia de la clase.
    */
   clone () {
@@ -337,6 +397,9 @@ class Geometry {
     clone.faces = [...this.faces]
     clone.normals = [...this.normals]
     clone.wireframeFaces = [...this.wireframeFaces]
+    clone.coordinates = [...this.coordinates]
+    clone.tangents = [...this.tangents]
+    clone.hasChanged = true
     return clone
   }
 }

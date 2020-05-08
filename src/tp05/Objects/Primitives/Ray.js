@@ -1,17 +1,28 @@
 const ObjectScene = require('../ObjectScene')
 const Mesh = require('../Mesh')
-const vec3 = require('gl-matrix/vec3')
+const Vec3 = require('../../Utils/Vec3')
 
 class Ray extends ObjectScene {
-  constructor (position, direction, length = 1, material = [1.0, 1.0, 1.0]) {
+  /**
+   * @param {Vec3} position
+   * @param {Vec3} direction
+   * @param {Number} length
+   * @param {Vec3} material
+   */
+  constructor (position, direction, length = 1, material = new Vec3(1.0)) {
     super()
-    let dir = vec3.scale([], direction, length)
-
-    let lookDir = vec3.add([], position, dir)
+    let lookDir = position.add(direction.scale(length))
     this.meshes[0].material = material
-    this.meshes[0].geometry.insertLine([position, lookDir], true)
+    this.meshes[0].geometry.insertLine([position, lookDir])
     this.meshes[0].useNormal = false
     this.meshes[0].renderType = Mesh.RENDER_TYPE.LINES
+  }
+
+  remesh (position, direction, length = 1, material = new Vec3(1.0)) {
+    this.meshes[0].geometry.clearData()
+    let lookDir = position.add(direction.scale(length))
+    this.meshes[0].geometry.insertLine([position, lookDir])
+    this.meshes[0].material = material
   }
 }
 

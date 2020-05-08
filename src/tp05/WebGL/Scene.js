@@ -1,40 +1,64 @@
 const ObjectScene = require('../Objects/ObjectScene')
-const vec3 = require('gl-matrix/vec3')
+const PointLight = require('../Light/PointLight')
+// eslint-disable-next-line no-unused-vars
+const DirLight = require('../Light/DirLight')
+const SpotLight = require('../Light/SpotLight')
+const Axis = require('../Axis/Axis')
+const Vec3 = require('../Utils/Vec3')
 
 class Scene {
-  /** @argument
-   * Array con los colores RGB de fondo, debe de ser de 3 elementos
+  /**
+   * @param {Vec3} clearColor
+   * @param {ObjectScene} obj
    */
   constructor (
-    clearColor = [0.15, 0.15, 0.15]) {
-    if (clearColor.length !== 3) {
-      this.clearColor = [0.15, 0.15, 0.15]
-    } else {
-      this.clearColor = clearColor
+    clearColor = new Vec3(0.15),
+    obj = null
+  ) {
+    this.clearColor = clearColor
+    if (obj) {
+      this.objects = [obj]
     }
-    this.objects = []
-    this.dirLight = null
+    /** @type DirLight */ this.dirLight = null
     this.ambientLight = null
     this.pointLights = []
-    this.spotLights = []
+    /** @type Array<SpotLight> */this.spotLights = []
   }
 
-  /** Funcion para agregar varios objetos a la escena. */
+  /**
+   * Funcion para agregar varios objetos a la escena.
+   * @param  {...ObjectScene} objects
+   */
   addObjects (...objects) {
     for (let object of objects) {
+      if (!(
+        object instanceof ObjectScene ||
+        object instanceof Axis
+      )) {
+        console.error(object, 'is not ObjectScene')
+        continue
+      }
+      if (!this.objects) {
+        this.objects = [object]
+      }
       this.objects.push(object)
     }
   }
 
   /**
    * Funcion Para agregar luces puntuales a la escena.
-   * @param  {...any} pointLights Una o mas de luces.
+   * @param  {...PointLight} pointLights Una o mas de luces.
    */
   addPointLights (...pointLights) {
     for (let pointLight of pointLights) {
+      if (!(pointLight instanceof PointLight)) {
+        console.error(pointLight, 'is not PointLight')
+        continue
+      }
       if (pointLight.representation !== null &&
-          pointLight.representation instanceof ObjectScene) {
-        pointLight.representation.meshes[0].material = vec3.scale([], pointLight.color, 0.8)
+          pointLight.representation instanceof ObjectScene
+      ) {
+        pointLight.representation.meshes[0].material.color = pointLight.color.scale(0.8)
         pointLight.representation.setTraslation(pointLight.position)
         pointLight.representation.meshes[0].useNormal = false
         this.addObjects(pointLight.representation)
@@ -45,13 +69,17 @@ class Scene {
 
   /**
    * Funcion Para agregar lamparas a la escena.
-   * @param  {...any} spotLights Una o mas de luces.
+   * @param  {...SpotLight} spotLights Una o mas de luces.
    */
   addSpotLights (...spotLights) {
     for (let spotLight of spotLights) {
+      if (!(spotLight instanceof SpotLight)) {
+        console.error(spotLight, 'is not SpotLight')
+        continue
+      }
       if (spotLight.representation !== null &&
           spotLight.representation instanceof ObjectScene) {
-        spotLight.representation.meshes[0].material = vec3.scale([], spotLight.color, 0.8)
+        spotLight.representation.meshes[0].material.color = spotLight.color.scale(0.8)
         spotLight.representation.setTraslation(spotLight.position)
         spotLight.representation.meshes[0].useNormal = false
         this.addObjects(spotLight.representation)

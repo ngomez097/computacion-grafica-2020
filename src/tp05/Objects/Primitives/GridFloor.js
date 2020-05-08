@@ -1,5 +1,6 @@
 const ObjectScene = require('../ObjectScene')
 const Mesh = require('../Mesh')
+const Vec3 = require('../../Utils/Vec3')
 
 class GridFloor extends ObjectScene {
   /**
@@ -21,16 +22,16 @@ class GridFloor extends ObjectScene {
     // Paralelas a X
     for (let z = -offset; z <= offset; z += this.gap) {
       geometry.insertLine([
-        [-offset, 0, z],
-        [offset, 0, z]
+        new Vec3(-offset, 0, z),
+        new Vec3(offset, 0, z)
       ])
     }
 
     // Paralelas a Z
     for (let x = -offset; x <= offset; x += this.gap) {
       geometry.insertLine([
-        [x, 0, -offset],
-        [x, 0, offset]
+        new Vec3(x, 0, -offset),
+        new Vec3(x, 0, offset)
       ])
     }
   }

@@ -1,21 +1,20 @@
 const mat4 = require('gl-matrix/mat4')
-const vec3 = require('gl-matrix/vec3')
-const utils = require('../Utils/Utils')
+const Vec3 = require('../Utils/Vec3')
 const LocalAxis = require('../Axis/LocalAxis')
 
 class Camera extends LocalAxis {
   constructor (
-    eye = [5, 5, 5],
-    center = [0, 0, 0],
-    up = [0, 1, 0],
+    eye = new Vec3(5),
+    center = new Vec3(),
+    up = new Vec3(0, 1, 0),
     rotationY = 0
   ) {
     super()
     this.viewMatrix = mat4.identity([])
     this.projectionMatrix = mat4.identity([])
-    this.eye = eye
-    this.center = center
-    this.up = up
+    /** @type Vec3 */ this.eye = eye
+    /** @type Vec3 */ this.center = center
+    /** @type Vec3 */ this.up = up
     this.rotateY = rotationY
     this.useLookAt = false
 
@@ -48,16 +47,25 @@ class Camera extends LocalAxis {
   }
 
   setPosition (newPosition) {
-    if (!utils.arraysEqual(this.eye, newPosition)) {
-      this.eye = [...newPosition]
+    if (!(newPosition instanceof Vec3)) {
+      console.error('newPosition is not Vec3')
+      return 0
+    }
+
+    if (!this.eye.equal(newPosition)) {
+      this.eye.copy(newPosition)
       this.requireViewMatrixUpdate()
     }
   }
 
   setLookAt (newLookAt) {
-    if (!utils.arraysEqual(this.center, newLookAt)) {
-      this.center = [...newLookAt]
-      this.requireViewMatrixUpdate()
+    if (newLookAt instanceof Vec3) {
+      if (!this.center.equal(newLookAt)) {
+        this.center = newLookAt.clone()
+        this.requireViewMatrixUpdate()
+      }
+    } else {
+      console.error('newLookAt is not Vec3')
     }
   }
 
@@ -94,8 +102,9 @@ class Camera extends LocalAxis {
    */
   moveForward (velocity = 0.2) {
     let moveDirection = this.getLocalAxis(LocalAxis.AXIS.Z)
-    vec3.scale(moveDirection, moveDirection, velocity)
-    vec3.sub(this.eye, this.eye, moveDirection)
+    this.eye.copy(
+      this.eye.sub(moveDirection.scale(velocity))
+    )
     this.requireViewMatrixUpdate()
   }
 
@@ -105,8 +114,7 @@ class Camera extends LocalAxis {
    */
   moveBackward (velocity = 0.2) {
     let moveDirection = this.getLocalAxis(LocalAxis.AXIS.Z)
-    vec3.scale(moveDirection, moveDirection, velocity)
-    vec3.add(this.eye, this.eye, moveDirection)
+    this.eye.copy(this.eye.add(moveDirection.scale(velocity)))
     this.requireViewMatrixUpdate()
   }
 
@@ -116,8 +124,7 @@ class Camera extends LocalAxis {
    */
   moveRight (velocity = 0.2) {
     let moveDirection = this.getLocalAxis(LocalAxis.AXIS.X)
-    vec3.scale(moveDirection, moveDirection, velocity)
-    vec3.add(this.eye, this.eye, moveDirection)
+    this.eye.copy(this.eye.add(moveDirection.scale(velocity)))
     this.requireViewMatrixUpdate()
   }
 
@@ -127,8 +134,7 @@ class Camera extends LocalAxis {
    */
   moveLeft (velocity = 0.2) {
     let moveDirection = this.getLocalAxis(LocalAxis.AXIS.X)
-    vec3.scale(moveDirection, moveDirection, velocity)
-    vec3.sub(this.eye, this.eye, moveDirection)
+    this.eye.copy(this.eye.sub(moveDirection.scale(velocity)))
     this.requireViewMatrixUpdate()
   }
 
@@ -136,7 +142,7 @@ class Camera extends LocalAxis {
    * Funcion para obtener la direccion de la camara.
    */
   getLookDirection () {
-    return vec3.scale([], this.getLocalAxis(LocalAxis.AXIS.Z), -1)
+    return this.getLocalAxis(LocalAxis.AXIS.Z).invert()
   }
 
   setLookAtEnable (enable) {
@@ -149,9 +155,9 @@ class Camera extends LocalAxis {
   updateViewMatrix () {
     this.viewMatrix = mat4.create()
     if (this.useLookAt) {
-      mat4.lookAt(this.viewMatrix, this.eye, this.center, this.up)
+      mat4.lookAt(this.viewMatrix, this.eye.toArray(), this.center.toArray(), this.up.toArray())
     } else {
-      mat4.translate(this.viewMatrix, this.viewMatrix, this.eye)
+      mat4.translate(this.viewMatrix, this.viewMatrix, this.eye.toArray())
 
       let localMatrix = this.getAxisMatrix()
       mat4.multiply(this.viewMatrix, this.viewMatrix, localMatrix)

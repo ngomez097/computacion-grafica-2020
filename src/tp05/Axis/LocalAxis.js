@@ -1,12 +1,12 @@
 const mat4 = require('gl-matrix/mat4')
-const utils = require('../Utils/Utils')
+const Vec3 = require('../Utils/Vec3')
 const radFactor = Math.PI / 180.0
 
 // Clase que se encarga de gestionar la rotacion global y local.
 // La multiplicacion de las matrices se hace en el orden ZYX
 class LocalAxis {
   constructor () {
-    this.rotation = [0.0, 0.0, 0.0]
+    this.rotation = new Vec3(0.0)
     this.needUpdate = true
   }
 
@@ -22,8 +22,12 @@ class LocalAxis {
   }
 
   setRotation (newRotation) {
-    if (!utils.arraysEqual(newRotation, this.rotation)) {
-      this.rotation = [...newRotation]
+    if (!(newRotation instanceof Vec3)) {
+      console.error('newRotation is not Vec3')
+    }
+
+    if (!this.rotation.equal(newRotation)) {
+      this.rotation.copy(newRotation)
       this.needUpdate = true
     }
   }
@@ -32,18 +36,15 @@ class LocalAxis {
    * Funcion para rotar al rededor de un eje arbitrario.
    * @param {*} angle Angulo en grados de la rotacion.
    * @param {*} mat La matriz de rotacion.
-   * @param {*} vecAxis El eje por el cual rotar.
+   * @param {Vec3} vecAxis El eje por el cual rotar.
    */
   rotate (angle, mat, vecAxis) {
     let aux = mat4.identity([])
     angle = angle * Math.PI / 180.0
 
-    mat4.rotate(aux, aux, angle, vecAxis)
+    mat4.rotate(aux, aux, angle, vecAxis.toArray())
     mat4.multiply(mat, aux, mat)
-    let auxRot = this.GetRotation(mat)
-    this.rotation[0] = auxRot.x
-    this.rotation[1] = auxRot.y
-    this.rotation[2] = auxRot.z
+    this.rotation = this.GetRotation(mat)
     this.needUpdate = true
   }
 
@@ -74,13 +75,13 @@ class LocalAxis {
     let rot = this.getAxisMatrix()
     switch (axis) {
       case LocalAxis.AXIS.X:
-        this.rotate(angle, rot, [1, 0, 0])
+        this.rotate(angle, rot, new Vec3(1, 0, 0))
         break
       case LocalAxis.AXIS.Y:
-        this.rotate(angle, rot, [0, 1, 0])
+        this.rotate(angle, rot, new Vec3(0, 1, 0))
         break
       case LocalAxis.AXIS.Z:
-        this.rotate(angle, rot, [0, 0, 1])
+        this.rotate(angle, rot, new Vec3(0, 0, 1))
         break
     }
     return this.rotation
@@ -93,13 +94,11 @@ class LocalAxis {
    */
   getLocalAxis (axis = LocalAxis.AXIS.X) {
     let mat = this.getAxisMatrix()
-
-    let localAxis = [
+    return new Vec3(
       mat[axis * 4],
       mat[axis * 4 + 1],
       mat[axis * 4 + 2]
-    ]
-    return localAxis
+    ).normalize()
   }
 
   /**
@@ -115,9 +114,9 @@ class LocalAxis {
 
   updateRotationMatrix () {
     this.rotationMatrix = mat4.identity([])
-    mat4.rotateX(this.rotationMatrix, this.rotationMatrix, this.rotation[0] * radFactor)
-    mat4.rotateY(this.rotationMatrix, this.rotationMatrix, this.rotation[1] * radFactor)
-    mat4.rotateZ(this.rotationMatrix, this.rotationMatrix, this.rotation[2] * radFactor)
+    mat4.rotateX(this.rotationMatrix, this.rotationMatrix, this.rotation.x * radFactor)
+    mat4.rotateY(this.rotationMatrix, this.rotationMatrix, this.rotation.y * radFactor)
+    mat4.rotateZ(this.rotationMatrix, this.rotationMatrix, this.rotation.z * radFactor)
   }
 
   /**
@@ -125,12 +124,11 @@ class LocalAxis {
    * @param {*} mat Matriz para extraer la rotacion.
    */
   GetRotation (mat) {
-    let angles = {}
-    let math = Math
+    let angles = new Vec3()
 
-    angles.x = -math.atan2(mat[9], mat[10]) * 1.0 / radFactor
-    angles.y = -math.asin(-mat[8]) * 1.0 / radFactor
-    angles.z = -math.atan2(mat[4], mat[0]) * 1.0 / radFactor
+    angles.x = -Math.atan2(mat[9], mat[10]) * 1.0 / radFactor
+    angles.y = -Math.asin(-mat[8]) * 1.0 / radFactor
+    angles.z = -Math.atan2(mat[4], mat[0]) * 1.0 / radFactor
 
     return angles
   }

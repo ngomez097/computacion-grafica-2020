@@ -1,13 +1,17 @@
 const webGLUtil = require('./WebGLUtil')
 const PerspectiveCamera = require('../Camera/PerspectiveCamera')
 const Geometry = require('../Objects/Geometry')
-// const Ray = require('../Objects/Primitives/Ray')
+const Vec3 = require('../Utils/Vec3')
 const Mesh = require('../Objects/Mesh')
+const Scene = require('./Scene')
+const Camera = require('../Camera/Camera')
 
 const mat4 = require('gl-matrix/mat4')
-const vec3 = require('gl-matrix/vec3')
 
 class WebGLRender {
+  /**
+   * @param {HTMLCanvasElement} canvas
+   */
   constructor (canvas) {
     if (canvas == null) {
       alert('there is no canvas on this page')
@@ -35,8 +39,8 @@ class WebGLRender {
     }
     this.prg = this._gl.createProgram()
 
-    this.initShader('./vertex-shader.glsl', this._gl.VERTEX_SHADER)
-    this.initShader('./fragment-shader.glsl', this._gl.FRAGMENT_SHADER)
+    this.initShader('./Shaders/vertex-shader.glsl', this._gl.VERTEX_SHADER)
+    this.initShader('./Shaders/fragment-shader.glsl', this._gl.FRAGMENT_SHADER)
 
     this._gl.linkProgram(this.prg)
 
@@ -52,12 +56,21 @@ class WebGLRender {
     // Obteniendo las ubicaciones de las variables.
     this.shaderAttributes['a_VertexPosition'] = this._gl.getAttribLocation(this.prg, 'a_VertexPosition')
     this.shaderAttributes['a_VertexNormal'] = this._gl.getAttribLocation(this.prg, 'a_VertexNormal')
+    this.shaderAttributes['a_TextureCoordinates'] = this._gl.getAttribLocation(this.prg, 'a_TextureCoordinates')
+    this.shaderAttributes['a_VertexTangent'] = this._gl.getAttribLocation(this.prg, 'a_VertexTangent')
 
     webGLUtil.storeUniformsLocation(this._gl, this.prg, this.shaderAttributes, [
       'u_MVMatrix', 'u_MVInverseTransposeMatrix', 'u_VMatrix', 'u_PMatrix', 'u_ambientLight',
-      'u_Color', 'u_eyes_position', 'u_ambientLightIntensity', 'u_UseNormal',
-      'u_numPointLights', 'u_numSpotLights', 'u_dirLight.dir', 'u_dirLight.color', 'u_dirLight.intensity'
+      'material.u_Color', 'u_eyes_position', 'u_ambientLightIntensity', 'material.u_UseNormal',
+      'u_numPointLights', 'u_numSpotLights', 'u_dirLight.dir', 'u_dirLight.color', 'u_dirLight.intensity',
+      'material.u_useTexture', 'material.u_textureDiffuse', 'material.u_textureNormal', 'material.u_normalStrength',
+      'material.u_textureAO', 'material.u_textureRoughness'
     ])
+
+    this._gl.uniform1i(this.shaderAttributes['material.u_textureDiffuse'], 0)
+    this._gl.uniform1i(this.shaderAttributes['material.u_textureNormal'], 1)
+    this._gl.uniform1i(this.shaderAttributes['material.u_textureAO'], 2)
+    this._gl.uniform1i(this.shaderAttributes['material.u_textureRoughness'], 3)
 
     for (let i = 0; i < 32; i++) {
       webGLUtil.storeUniformsLocation(this._gl, this.prg, this.shaderAttributes, [
@@ -78,7 +91,7 @@ class WebGLRender {
 
     if (message.length > 0) {
       /* message may be an error or a warning */
-      console.error(message)
+      console.error(pathShader, message)
     }
 
     this._gl.attachShader(this.prg, shader)
@@ -99,6 +112,9 @@ class WebGLRender {
     this._gl.drawElements(this._gl.LINES, indexArray.length, this._gl.UNSIGNED_SHORT, 0)
   }
 
+  /**
+   * @param {Vec3} color
+   */
   clearBackground (color) {
     webGLUtil.resizeCanvas(this._gl)
     webGLUtil.paintBackground(this._gl, color)
@@ -107,11 +123,16 @@ class WebGLRender {
   /**
    *  Funcion para calcular la direccion de un rayo desde la camara
    * con respecto a un punto en la pantalla.
-   * @param {*} x Posicion x de la pantalla.
-   * @param {*} y Posicion y de la pantalla.
-   * @param {*} camera Camara de la cual calcular el rayo.
+   * @param {Number} x Posicion x de la pantalla.
+   * @param {Number} y Posicion y de la pantalla.
+   * @param {Camera} camera Camara de la cual calcular el rayo.
    */
   rayCasting (x, y, camera) {
+    if (!(camera instanceof Camera)) {
+      console.error('camera is not Camera')
+      return
+    }
+
     let matP = camera.getProjectionMatrix()
     let matV = camera.getViewMatrix()
     let canvas = this._gl.canvas
@@ -128,17 +149,25 @@ class WebGLRender {
     vector = [aux[0], aux[1], -1.0, 0.0]
 
     mat4.multiply(aux, matV, vector)
-    vector = [aux[0], aux[1], aux[2]]
+    let vec = new Vec3(aux[0], aux[1], aux[2])
 
-    vec3.normalize(vector, vector)
-    return vector
+    return vec.normalize()
   }
 
-  getSelectedObject (x, y, camera, scene) {
-    let rayDir = this.rayCasting(x, y, camera)
+  /**
+   * @param {Vec3} position
+   * @param {Vec3} direction
+   * @param {Scene} scene
+   */
+  getSelectedObject (position, direction, scene) {
+    if (!(scene instanceof Scene)) {
+      console.error('scene is not Scene')
+      return
+    }
+
     let transformMat
     let aux = []
-    let normal = []
+    let normal
     let geometry
     let vertices
     let edge
@@ -146,7 +175,7 @@ class WebGLRender {
     let i, j, nextJ
     let vertexToPoint
     let auxDot
-    let isOutSide
+    let isOutSide = true
     let vp, wp, t, P
     let rayToPlane
     let v1, v2
@@ -165,62 +194,57 @@ class WebGLRender {
           geometry = mesh.geometry
           faces = geometry.faces
           for (i = 0; i < faces.length; i += 3) {
-            vertices = [
-              geometry.getVertices(faces[i]).concat(1),
-              geometry.getVertices(faces[i + 1]).concat(1),
-              geometry.getVertices(faces[i + 2]).concat(1)
-            ]
+            vertices = geometry.getVertices(faces[i], faces[i + 1], faces[i + 2])
+
             // Trasladar los vertices.
-            mat4.multiply(aux, transformMat, vertices[0])
-            vertices[0] = [aux[0], aux[1], aux[2]]
+            mat4.multiply(aux, transformMat, vertices[0].toArray().concat(1))
+            vertices[0] = new Vec3(aux[0], aux[1], aux[2])
 
-            mat4.multiply(aux, transformMat, vertices[1])
-            vertices[1] = [aux[0], aux[1], aux[2]]
+            mat4.multiply(aux, transformMat, vertices[1].toArray().concat(1))
+            vertices[1] = new Vec3(aux[0], aux[1], aux[2])
 
-            mat4.multiply(aux, transformMat, vertices[2])
-            vertices[2] = [aux[0], aux[1], aux[2]]
+            mat4.multiply(aux, transformMat, vertices[2].toArray().concat(1))
+            vertices[2] = new Vec3(aux[0], aux[1], aux[2])
 
             // Obtener la normal del triangulo.
             // Se calcula nuevamente porque se requiere que no sea smooth.
-            v1 = vec3.sub([], vertices[1], vertices[0])
-            v2 = vec3.sub([], vertices[2], vertices[0])
-            vec3.cross(normal, v1, v2)
-            vec3.normalize(normal, normal)
+            v1 = vertices[1].sub(vertices[0])
+            v2 = vertices[2].sub(vertices[0])
+            normal = v1.cross(v2).normalize()
 
-            rayToPlane = []
-            vec3.sub(rayToPlane, vertices[0], camera.eye)
+            rayToPlane = vertices[0].sub(position)
 
-            /* let ray = new Ray(vertices[0], normal, 0.5, [1.0, 1.0, 1.0])
+            /* const Ray = require('../Objects/Primitives/Ray')
+            let ray = new Ray(vertices[0], normal, 0.5, [1.0, 1.0, 1.0])
             scene.addObjects(ray)
             ray = new Ray(vertices[1], normal, 0.5, [1.0, 1.0, 1.0])
             scene.addObjects(ray)
             ray = new Ray(vertices[2], normal, 0.5, [1.0, 1.0, 1.0])
             scene.addObjects(ray) */
 
-            vp = vec3.dot(rayDir, normal)
+            vp = direction.dot(normal)
             if (vp > -1e-16) {
               continue
             }
 
-            wp = vec3.dot(rayToPlane, normal)
+            wp = rayToPlane.dot(normal)
             t = wp / vp
 
             if (t > 1e-16) {
-              P = vec3.add([], camera.eye, vec3.scale([], rayDir, t))
               isOutSide = false
+              P = position.add(direction.scale(t))
               for (j = 0; j < 3; j++) {
                 nextJ = (j + 1) % 3
-                edge = vec3.sub([], vertices[nextJ], vertices[j])
-                vertexToPoint = vec3.sub([], P, vertices[j])
-                auxDot = vec3.dot(normal, vec3.cross([], edge, vertexToPoint))
+                edge = vertices[nextJ].sub(vertices[j])
+                vertexToPoint = P.sub(vertices[j])
+                auxDot = normal.dot(edge.cross(vertexToPoint))
+
                 if (auxDot < 0) {
                   isOutSide = true
                   break
                 }
               }
-              if (
-                !isOutSide
-              ) {
+              if (!isOutSide) {
                 break
               }
             }
@@ -241,6 +265,15 @@ class WebGLRender {
    * @param {Camera} camera Camara donde se dibujara.
    */
   render (scene, camera) {
+    if (!(camera instanceof Camera)) {
+      console.error('camera is not Camera')
+      return
+    }
+    if (!(scene instanceof Scene)) {
+      console.error('scene is not Scene')
+      return
+    }
+
     // Establecer la relacion de aspecto de la camara
     if (camera instanceof PerspectiveCamera) {
       camera.aspect = this._gl.canvas.clientWidth / this._gl.canvas.clientHeight
@@ -252,6 +285,7 @@ class WebGLRender {
     let faces
     let normals
     let buffer
+    let geometry
 
     // Se establece la matriz de proyeccion
     if (camera.PMNeedRenderUpdate) {
@@ -332,10 +366,63 @@ class WebGLRender {
       }
 
       for (let mesh of meshes) {
+        geometry = mesh.geometry
         if (mesh.renderType === Mesh.RENDER_TYPE.LINES) {
-          faces = mesh.geometry.wireframeFaces
+          faces = geometry.wireframeFaces
         } else {
-          faces = mesh.geometry.faces
+          faces = geometry.faces
+        }
+
+        // Texturas
+        if (mesh.material.useTexure) {
+          let texture = mesh.material.texture
+          if (texture.textureHasChanged) {
+            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, geometry.coordinates, this.shaderAttributes['a_TextureCoordinates'], 2)
+            geometry.coordinatesBuffer = buffer
+
+            buffer = webGLUtil.createTexture(this._gl, texture.diffuseTextureSrc)
+            texture.diffuseTexture = buffer
+
+            if (texture.normalTextureSrc) {
+              buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, geometry.tangents, this.shaderAttributes['a_VertexTangent'])
+              geometry.tangentsBuffer = buffer
+
+              texture.normalTexture = webGLUtil.createTexture(this._gl, texture.normalTextureSrc)
+            }
+
+            if (texture.AOTextureSrc) {
+              texture.AOTexture = webGLUtil.createTexture(this._gl, texture.AOTextureSrc)
+            }
+
+            if (texture.roughnessTextureSrc) {
+              texture.roughnessTexture = webGLUtil.createTexture(this._gl, texture.roughnessTextureSrc)
+            }
+
+            texture.textureHasChanged = false
+          } else {
+            webGLUtil.bindFloatArrayBuffer(this._gl, geometry.coordinatesBuffer, this.shaderAttributes['a_TextureCoordinates'], 2)
+            if (texture.tangentsBuffer) {
+              webGLUtil.bindFloatArrayBuffer(this._gl, geometry.tangentsBuffer, this.shaderAttributes['a_VertexTangent'], 2)
+            }
+          }
+
+          webGLUtil.bindTexture(this._gl, texture.diffuseTexture, this._gl.TEXTURE0)
+          if (texture.normalTexture) {
+            webGLUtil.bindTexture(this._gl, texture.normalTexture, this._gl.TEXTURE1)
+            webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_normalStrength'], texture.normalStrength)
+          }
+
+          if (texture.AOTexture) {
+            webGLUtil.bindTexture(this._gl, texture.AOTexture, this._gl.TEXTURE2)
+          }
+
+          if (texture.roughnessTexture) {
+            webGLUtil.bindTexture(this._gl, texture.roughnessTexture, this._gl.TEXTURE3)
+          }
+
+          webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_useTexture'], true)
+        } else {
+          webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_useTexture'], false)
         }
 
         if (mesh.geometry.hasChanged) {
@@ -365,8 +452,8 @@ class WebGLRender {
           this.index_buffer = mesh.geometry.indexBuffer
         }
 
-        webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_Color'], mesh.material)
-        webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['u_UseNormal'], mesh.useNormal)
+        webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_Color'], mesh.material.color)
+        webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_UseNormal'], mesh.useNormal)
 
         if (mesh.clearDepth) {
           this._gl.disable(this._gl.DEPTH_TEST)

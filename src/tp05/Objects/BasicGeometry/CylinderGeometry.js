@@ -1,4 +1,5 @@
 const Geometry = require('../Geometry')
+const Vec3 = require('../../Utils/Vec3')
 
 class CylinderGeometry extends Geometry {
   /**
@@ -33,13 +34,13 @@ class CylinderGeometry extends Geometry {
       xz2 = [Math.cos(angle) * radius, Math.sin(angle) * radius]
       let offsetY = heigth / 2.0
       this.insertPlane([
-        [xz1[0], offsetY, xz1[1]],
-        [xz2[0], offsetY, xz2[1]],
-        [xz2[0], -offsetY, xz2[1]],
-        [xz1[0], -offsetY, xz1[1]]
+        new Vec3(xz1[0], offsetY, xz1[1]),
+        new Vec3(xz2[0], offsetY, xz2[1]),
+        new Vec3(xz2[0], -offsetY, xz2[1]),
+        new Vec3(xz1[0], -offsetY, xz1[1])
       ], !shadeSmooth)
-      topVertex.push([xz2[0], offsetY, xz2[1]])
-      botommVertex.push([xz2[0], -offsetY, xz2[1]])
+      topVertex.push(new Vec3(xz2[0], offsetY, xz2[1]))
+      botommVertex.push(new Vec3(xz2[0], -offsetY, xz2[1]))
     }
 
     // Tapas superior e inferior.

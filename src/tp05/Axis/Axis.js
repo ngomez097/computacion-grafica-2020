@@ -1,6 +1,7 @@
 const Mesh = require('../Objects/Mesh')
 const Geometry = require('../Objects/Geometry')
 const ObjectProperty = require('../Objects/ObjectProperty')
+const Vec3 = require('../Utils/Vec3')
 
 // Clase para la creacion de la grilla.
 class Axis extends ObjectProperty {
@@ -25,11 +26,11 @@ class Axis extends ObjectProperty {
     if (show_axe[0]) {
       // Para marcar la profundidad
       mesh = new Mesh()
-      mesh.material = [1.0, 0.4, 0.4]
+      mesh.material.setColor(new Vec3(1.0, 0.4, 0.4))
       geometry = new Geometry()
       geometry.insertLine([
-        [0.0, 0.0, 0.0],
-        [size, 0.0, 0.0]
+        new Vec3(0.0, 0.0, 0.0),
+        new Vec3(size, 0.0, 0.0)
       ])
       mesh.geometry = geometry
       mesh.renderType = Mesh.RENDER_TYPE.LINES
@@ -46,11 +47,11 @@ class Axis extends ObjectProperty {
     // Eje Y
     if (show_axe[1]) {
       mesh = new Mesh()
-      mesh.material = [0.4, 1.0, 0.4]
+      mesh.material.setColor(new Vec3(0.4, 1.0, 0.4))
       geometry = new Geometry()
       geometry.insertLine([
-        [0.0, 0.0, 0.0],
-        [0.0, size, 0.0]
+        new Vec3(0.0, 0.0, 0.0),
+        new Vec3(0.0, size, 0.0)
       ])
       mesh.geometry = geometry
       mesh.renderType = Mesh.RENDER_TYPE.LINES
@@ -67,11 +68,11 @@ class Axis extends ObjectProperty {
     // Eje Z
     if (show_axe[2]) {
       mesh = new Mesh()
-      mesh.material = [0.4, 0.4, 1.0]
+      mesh.material.setColor(new Vec3(0.4, 0.4, 1.0))
       geometry = new Geometry()
       geometry.insertLine([
-        [0.0, 0.0, 0.0],
-        [0.0, 0.0, size]
+        new Vec3(0.0, 0.0, 0.0),
+        new Vec3(0.0, 0.0, size)
       ])
       mesh.geometry = geometry
       mesh.renderType = Mesh.RENDER_TYPE.LINES
