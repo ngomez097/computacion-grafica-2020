@@ -85,9 +85,9 @@ void main(void) {
     objNormal = texture2D(material.u_textureNormal, f_textureCoordinates).rgb;
     objNormal = normalize((objNormal * 2.0) - vec3(1.0));
     objNormal = normalize(
-      normalize(f_tangent) * objNormal.x +
-      normalize(f_bitangent) * objNormal.y +
-      normalize(f_normals) * objNormal.z * mix(50.0, 1.0, material.u_normalStrength)
+      normalize(f_tangent) * objNormal.x * material.u_normalStrength+
+      normalize(f_bitangent) * objNormal.y * material.u_normalStrength+
+      normalize(f_normals) * objNormal.z 
     );
     objRoughness = 1.0 - texture2D(material.u_textureRoughness, f_textureCoordinates).r;
   } else {

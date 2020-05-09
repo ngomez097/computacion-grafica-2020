@@ -576,7 +576,7 @@ function initGUI () {
   gui.close()
   // Grilla y Ejes
   gui.add(gridConf, 'enable').name('Show grid & axis')
-  gui.add(floor.meshes[0].material.texture, 'normalStrength', 0, 1, 0.01)
+  gui.add(floor.meshes[0].material.texture, 'normalStrength', 0, 2, 0.01)
 
   // Objectos
   let object = gui.addFolder('Objects')
