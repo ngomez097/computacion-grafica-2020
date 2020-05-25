@@ -6,6 +6,7 @@ precision mediump int;
 attribute vec3 a_VertexPosition;
 attribute vec3 a_VertexNormal;
 attribute vec3 a_VertexTangent;
+attribute vec3 a_VertexBitangent;
 attribute vec2 a_TextureCoordinates;
 
 uniform mat4 u_MVMatrix;
@@ -26,7 +27,7 @@ mat4 InverseTranspose;
 void main(void) {
   f_normals = (u_MVInverseTransposeMatrix * vec4(a_VertexNormal, 0.0)).xyz;
   f_tangent = (u_MVInverseTransposeMatrix * vec4(a_VertexTangent, 0.0)).xyz;
-  f_bitangent = cross(f_normals,f_tangent);
+  f_bitangent = (u_MVInverseTransposeMatrix * vec4(a_VertexBitangent, 0.0)).xyz;
 
   pos = vec4(a_VertexPosition, 1.0);
   pos = u_MVMatrix * pos;

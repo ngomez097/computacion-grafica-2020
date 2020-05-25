@@ -58,10 +58,11 @@ class WebGLRender {
     this.shaderAttributes['a_VertexNormal'] = this._gl.getAttribLocation(this.prg, 'a_VertexNormal')
     this.shaderAttributes['a_TextureCoordinates'] = this._gl.getAttribLocation(this.prg, 'a_TextureCoordinates')
     this.shaderAttributes['a_VertexTangent'] = this._gl.getAttribLocation(this.prg, 'a_VertexTangent')
+    this.shaderAttributes['a_VertexBitangent'] = this._gl.getAttribLocation(this.prg, 'a_VertexBitangent')
 
     webGLUtil.storeUniformsLocation(this._gl, this.prg, this.shaderAttributes, [
       'u_MVMatrix', 'u_MVInverseTransposeMatrix', 'u_VMatrix', 'u_PMatrix', 'u_ambientLight',
-      'material.u_Color', 'u_eyes_position', 'u_ambientLightIntensity', 'material.u_UseNormal',
+      'u_eyes_position', 'u_ambientLightIntensity', 'material.u_UseNormal', 'material.u_Color', 'material.u_Roughness',
       'u_numPointLights', 'u_numSpotLights', 'u_dirLight.dir', 'u_dirLight.color', 'u_dirLight.intensity',
       'material.u_useTexture', 'material.u_textureDiffuse', 'material.u_textureNormal', 'material.u_normalStrength',
       'material.u_textureAO', 'material.u_textureRoughness'
@@ -97,19 +98,31 @@ class WebGLRender {
     this._gl.attachShader(this.prg, shader)
   }
 
-  drawElementsTriangle (indexArray) {
-    this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, this.index_buffer)
-    this._gl.drawElements(this._gl.TRIANGLES, indexArray.length, this._gl.UNSIGNED_SHORT, 0)
+  drawElementsTriangle (indexBuffer, length) {
+    this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+    this._gl.drawElements(this._gl.TRIANGLES, length, this._gl.UNSIGNED_SHORT, 0)
   }
 
-  drawElementsLineLoop (indexArray) {
-    this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, this.index_buffer)
-    this._gl.drawElements(this._gl.LINE_LOOP, indexArray.length, this._gl.UNSIGNED_SHORT, 0)
+  drawArrayTriangle (length) {
+    this._gl.drawArrays(this._gl.TRIANGLES, 0, length)
   }
 
-  drawElementsLines (indexArray) {
-    this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, this.index_buffer)
-    this._gl.drawElements(this._gl.LINES, indexArray.length, this._gl.UNSIGNED_SHORT, 0)
+  drawElementsLineLoop (indexBuffer, length) {
+    this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+    this._gl.drawElements(this._gl.LINE_LOOP, length, this._gl.UNSIGNED_SHORT, 0)
+  }
+
+  drawArrayLineLoop (length) {
+    this._gl.drawArrays(this._gl.LINE_LOOP, 0, length)
+  }
+
+  drawElementsLines (indexBuffer, length) {
+    this._gl.bindBuffer(this._gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
+    this._gl.drawElements(this._gl.LINES, length, this._gl.UNSIGNED_SHORT, 0)
+  }
+
+  drawArrayLines (length) {
+    this._gl.drawArrays(this._gl.LINES, 0, length)
   }
 
   /**
@@ -172,13 +185,12 @@ class WebGLRender {
     let vertices
     let edge
     let faces
-    let i, j, nextJ
+    let j, nextJ
     let vertexToPoint
     let auxDot
     let isOutSide = true
     let vp, wp, t, P
     let rayToPlane
-    let v1, v2
     let out = []
 
     // Iterando sobre los objetos de la escena
@@ -193,8 +205,11 @@ class WebGLRender {
         for (let mesh of obj.meshes) {
           geometry = mesh.geometry
           faces = geometry.faces
-          for (i = 0; i < faces.length; i += 3) {
-            vertices = geometry.getVertices(faces[i], faces[i + 1], faces[i + 2])
+          for (let face of faces) {
+            vertices = []
+            for (let vertex of face.vertexArray) {
+              vertices.push(vertex.vertex)
+            }
 
             // Trasladar los vertices.
             mat4.multiply(aux, transformMat, vertices[0].toArray().concat(1))
@@ -208,9 +223,7 @@ class WebGLRender {
 
             // Obtener la normal del triangulo.
             // Se calcula nuevamente porque se requiere que no sea smooth.
-            v1 = vertices[1].sub(vertices[0])
-            v2 = vertices[2].sub(vertices[0])
-            normal = v1.cross(v2).normalize()
+            normal = face.normal
 
             rayToPlane = vertices[0].sub(position)
 
@@ -266,11 +279,11 @@ class WebGLRender {
    */
   render (scene, camera) {
     if (!(camera instanceof Camera)) {
-      console.error('camera is not Camera')
+      console.error('camera is not instance of Camera')
       return
     }
     if (!(scene instanceof Scene)) {
-      console.error('scene is not Scene')
+      console.error('scene is not instance of Scene')
       return
     }
 
@@ -281,11 +294,9 @@ class WebGLRender {
 
     let ModelMatrix
     let InvertseTransposeModelMatrix
-    let vertices
-    let faces
-    let normals
     let buffer
     let geometry
+    let data
 
     // Se establece la matriz de proyeccion
     if (camera.PMNeedRenderUpdate) {
@@ -364,29 +375,22 @@ class WebGLRender {
       if (object.showLocalAxis) {
         meshes = meshes.concat(object.localAxisRepresentation.meshes)
       }
-
+      if (object.showNormalsRay) {
+        meshes = meshes.concat(object.normalsRay)
+      }
+      if (object.meshes[0].bounding && object.meshes[0].bounding.show) {
+        meshes = meshes.concat(object.meshes[0].bounding.lines)
+      }
       for (let mesh of meshes) {
         geometry = mesh.geometry
-        if (mesh.renderType === Mesh.RENDER_TYPE.LINES) {
-          faces = geometry.wireframeFaces
-        } else {
-          faces = geometry.faces
-        }
-
         // Texturas
         if (mesh.material.useTexure) {
           let texture = mesh.material.texture
           if (texture.textureHasChanged) {
-            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, geometry.coordinates, this.shaderAttributes['a_TextureCoordinates'], 2)
-            geometry.coordinatesBuffer = buffer
-
             buffer = webGLUtil.createTexture(this._gl, texture.diffuseTextureSrc)
             texture.diffuseTexture = buffer
 
             if (texture.normalTextureSrc) {
-              buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, geometry.tangents, this.shaderAttributes['a_VertexTangent'])
-              geometry.tangentsBuffer = buffer
-
               texture.normalTexture = webGLUtil.createTexture(this._gl, texture.normalTextureSrc)
             }
 
@@ -399,11 +403,6 @@ class WebGLRender {
             }
 
             texture.textureHasChanged = false
-          } else {
-            webGLUtil.bindFloatArrayBuffer(this._gl, geometry.coordinatesBuffer, this.shaderAttributes['a_TextureCoordinates'], 2)
-            if (texture.tangentsBuffer) {
-              webGLUtil.bindFloatArrayBuffer(this._gl, geometry.tangentsBuffer, this.shaderAttributes['a_VertexTangent'], 2)
-            }
           }
 
           webGLUtil.bindTexture(this._gl, texture.diffuseTexture, this._gl.TEXTURE0)
@@ -425,46 +424,70 @@ class WebGLRender {
           webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_useTexture'], false)
         }
 
-        if (mesh.geometry.hasChanged) {
-          vertices = mesh.geometry.vertices
-          normals = mesh.geometry.normals
+        if (geometry.hasChanged) {
+          data = geometry.getData(mesh.renderType === Mesh.RENDER_TYPE.LINES)
           if (mesh.geometry.type === Geometry.TYPE['2D']) {
-            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, vertices, this.shaderAttributes['a_VertexPosition'], 2)
+            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, data.vertexs, this.shaderAttributes['a_VertexPosition'], 2)
             mesh.geometry.verticesBuffer = buffer
           } else {
-            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, vertices, this.shaderAttributes['a_VertexPosition'])
+            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, data.vertexs, this.shaderAttributes['a_VertexPosition'])
             mesh.geometry.verticesBuffer = buffer
 
-            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, normals, this.shaderAttributes['a_VertexNormal'])
+            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, data.normals, this.shaderAttributes['a_VertexNormal'])
             mesh.geometry.normalsBuffer = buffer
           }
-          this.index_buffer = webGLUtil.setNewIndexBuffer(this._gl, faces)
-          mesh.geometry.indexBuffer = this.index_buffer
 
-          mesh.geometry.hasChanged = false
+          if (mesh.material.useTexure) {
+            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, data.uvs, this.shaderAttributes['a_TextureCoordinates'], 2)
+            geometry.coordinatesBuffer = buffer
+            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, data.tangents, this.shaderAttributes['a_VertexTangent'])
+            geometry.tangentsBuffer = buffer
+
+            buffer = webGLUtil.bindNewFloatArrayBuffer(this._gl, data.bitangents, this.shaderAttributes['a_VertexBitangent'])
+            geometry.bitangentsBuffer = buffer
+          }
+
+          geometry.indexBufferLength = data.vertexs.length / 3
+
+          geometry.hasChanged = false
         } else {
-          buffer = mesh.geometry.verticesBuffer
+          buffer = geometry.verticesBuffer
           webGLUtil.bindFloatArrayBuffer(this._gl, buffer, this.shaderAttributes['a_VertexPosition'])
 
-          buffer = mesh.geometry.normalsBuffer
+          buffer = geometry.normalsBuffer
           webGLUtil.bindFloatArrayBuffer(this._gl, buffer, this.shaderAttributes['a_VertexNormal'])
 
-          this.index_buffer = mesh.geometry.indexBuffer
+          if (mesh.material.useTexure) {
+            webGLUtil.bindFloatArrayBuffer(this._gl, geometry.coordinatesBuffer, this.shaderAttributes['a_TextureCoordinates'], 2)
+
+            if (geometry.tangentsBuffer) {
+              webGLUtil.bindFloatArrayBuffer(this._gl, geometry.tangentsBuffer, this.shaderAttributes['a_VertexTangent'])
+            }
+
+            if (geometry.tangentsBuffer) {
+              webGLUtil.bindFloatArrayBuffer(this._gl, geometry.bitangentsBuffer, this.shaderAttributes['a_VertexBitangent'])
+            }
+          }
         }
 
         webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_Color'], mesh.material.color)
-        webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_UseNormal'], mesh.useNormal)
+        webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_Roughness'], mesh.material.roughness)
+        if (mesh.renderType !== Mesh.RENDER_TYPE.LINES) {
+          webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_UseNormal'], mesh.useNormal)
+        } else {
+          webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_UseNormal'], false)
+        }
 
         if (mesh.clearDepth) {
           this._gl.disable(this._gl.DEPTH_TEST)
         }
 
         if (mesh.renderType === Mesh.RENDER_TYPE.TRIANGLES) {
-          this.drawElementsTriangle(faces)
+          this.drawArrayTriangle(geometry.indexBufferLength)
         } else if (mesh.renderType === Mesh.RENDER_TYPE.LINE_LOOP) {
-          this.drawElementsLineLoop(faces)
+          this.drawArrayLineLoop(geometry.indexBufferLength)
         } else {
-          this.drawElementsLines(faces)
+          this.drawArrayLines(geometry.indexBufferLength)
         }
 
         if (mesh.clearDepth) {

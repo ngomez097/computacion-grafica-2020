@@ -35,7 +35,7 @@ class Scene {
         object instanceof ObjectScene ||
         object instanceof Axis
       )) {
-        console.error(object, 'is not ObjectScene')
+        console.error(object, 'is not ObjectScene or Axis')
         continue
       }
       if (!this.objects) {

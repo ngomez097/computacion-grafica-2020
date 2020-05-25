@@ -11,20 +11,18 @@ class Cylinder extends ObjectScene {
   constructor (
     segments = 3,
     radius = 1,
-    heigth = 1,
-    shadeSmooth = true
+    heigth = 1
   ) {
     super()
     this.segments = segments
     this.radius = radius
     this.heigth = heigth
-    this.shadeSmooth = shadeSmooth
     this.selectable = false
-    this.meshes[0].setGeometry(new CylinderGeometry(radius, heigth, segments, shadeSmooth))
+    this.meshes[0].setGeometry(new CylinderGeometry(radius, heigth, segments))
   }
 
   remesh () {
-    this.meshes[0].geometry.constructCylinder(this.radius, this.heigth, this.segments, this.shadeSmooth)
+    this.meshes[0].geometry.constructCylinder(this.radius, this.heigth, this.segments)
   }
 }
 

@@ -6,8 +6,9 @@ class Material {
   /**
    * @param {Vec3} color
    */
-  constructor (color = new Vec3(0.8)) {
+  constructor (color = new Vec3(0.8), roughness = 1.0) {
     this.color = color
+    this.roughness = roughness
     this.useTexure = false
     this.texture = new MaterialTexture()
   }

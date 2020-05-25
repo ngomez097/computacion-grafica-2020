@@ -28,7 +28,7 @@ class CubeGeometry extends Geometry {
         new Vec3(offset, fixedPosition, -offset),
         new Vec3(offset, fixedPosition, offset),
         new Vec3(-offset, fixedPosition, offset),
-      ], true, (y + flipNormal) % 2, uvSize)
+      ], false, (y + flipNormal) % 2, uvSize)
 
       // Atras y Frente
       this.insertPlane([
@@ -36,7 +36,7 @@ class CubeGeometry extends Geometry {
         new Vec3(-offset, offset, fixedPosition),
         new Vec3(offset, offset, fixedPosition),
         new Vec3(offset, -offset, fixedPosition)
-      ], true, (y + flipNormal) % 2, uvSize)
+      ], false, (y + flipNormal) % 2, uvSize)
 
       // Izquierda y Derecha
       this.insertPlane([
@@ -44,7 +44,7 @@ class CubeGeometry extends Geometry {
         new Vec3(fixedPosition, -offset, offset),
         new Vec3(fixedPosition, offset, offset),
         new Vec3(fixedPosition, offset, -offset)
-      ], true, (y + flipNormal) % 2, uvSize)
+      ], false, (y + flipNormal) % 2, uvSize)
     }
     this.hasChanged = true
   }

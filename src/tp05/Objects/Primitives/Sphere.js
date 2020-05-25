@@ -18,13 +18,12 @@ class Sphere extends ObjectScene {
     this.vertexRing = vertexRing
     this.rings = rings
     this.radius = radius
-    this.shadeSmooth = shadeSmooth
     this.selectable = false
-    this.meshes[0].setGeometry(new SphereGeometry(vertexRing, rings, radius, shadeSmooth))
+    this.meshes[0].setGeometry(new SphereGeometry(vertexRing, rings, radius))
   }
 
   remesh () {
-    this.meshes[0].geometry.constructSphere(this.vertexRing, this.rings, this.radius, this.shadeSmooth)
+    this.meshes[0].geometry.constructSphere(this.vertexRing, this.rings, this.radius)
   }
 }
 

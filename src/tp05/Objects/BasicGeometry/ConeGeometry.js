@@ -18,10 +18,10 @@ class ConeGeometry extends Geometry {
     shadeSmooth = false
   ) {
     super()
-    this.constructCone(heigth, baseVertexCount, radius, shadeSmooth)
+    this.constructCone(heigth, baseVertexCount, radius)
   }
 
-  constructCone (heigth = 1, baseVertexCount = 3, radius = 1, shadeSmooth = false) {
+  constructCone (heigth = 1, baseVertexCount = 3, radius = 1) {
     this.clearData()
     let offsetY = heigth / 2.0
     let topVertex = new Vec3(0, offsetY, 0)
@@ -39,25 +39,25 @@ class ConeGeometry extends Geometry {
 
       this.insertTriangle([
         topVertex, v2, v1
-      ], !shadeSmooth)
+      ])
 
       botommVertex.push(v2)
     }
-
     switch (botommVertex.length) {
       case 3:
         this.insertTriangle([
           botommVertex[0], botommVertex[1], botommVertex[2]
-        ], true)
+        ])
         break
       case 4:
         this.insertPlane([
           botommVertex[0], botommVertex[1], botommVertex[2], botommVertex[3]
-        ], true)
+        ])
         break
       default:
-        this.insertNGon(botommVertex, true)
+        this.insertNGon(botommVertex)
     }
+    this.recalculateSmoothNormals()
     this.hasChanged = true
   }
 }

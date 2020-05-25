@@ -29,9 +29,14 @@ class Vec3 {
    * @param {Vec3} vec
    */
   equal (vec) {
-    return this.x === vec.x &&
-      this.y === vec.y &&
-      this.z === vec.z
+    if (this.x !== vec.x) return false
+    if (this.y !== vec.y) return false
+    if (this.z !== vec.z) return false
+    return true
+  }
+
+  length () {
+    return (this.x ** 2 + this.y ** 2 + this.z ** 2) ** 0.5
   }
 
   /**
@@ -116,23 +121,27 @@ class Vec3 {
   }
 
   /**
-   * Función para obtener la normar de un triangulo en
-   * 3 coordenadas (p1 - p0) X (p2 - p0).
-   * @param {Vec3} p0
-   * @param {Vec3} p1
-   * @param {Vec3} p2
+   * @param {Vec3} vector
    */
-  static normals (p0, p1, p2) {
-    let v1 = p1.sub(p0)
-    let v2 = p2.sub(p0)
-    return v1.cross(v2).normalize()
+  cosAnleBetween (vector) {
+    return this.dot(vector) / (this.length() * vector.length())
   }
 
   /**
-   * @param {Array} array
+   * Funcion para saber si se encunetra cerca un punto de otro.
+   * @param {Vec2} vec
    */
-  static fromArray (array) {
-    return new Vec3(array[0] || 0, array[1] || 0, array[2] || 0)
+  close (vec) {
+    if (Math.abs(this.x - vec.x) > 1e-8) {
+      return false
+    }
+    if (Math.abs(this.y - vec.y) > 1e-8) {
+      return false
+    }
+    if (Math.abs(this.z - vec.z) > 1e-8) {
+      return false
+    }
+    return true
   }
 
   /**
@@ -152,6 +161,54 @@ class Vec3 {
     let vec = new Vec3()
     vec.copy(this)
     return vec
+  }
+
+  /**
+   * @param {Array<Vec3>} array
+   * @returns {Number} Indice de la posicion del elemento o null.
+   */
+  isInArray (array) {
+    for (let i = 0; i < array.length; i++) {
+      if (this.equal(array[i])) {
+        return i
+      }
+    }
+    return null
+  }
+
+  /**
+   * @param {Array<Array<Vec3>>} array
+   * @returns {Array<Number>} Indices del elemento o null.
+   */
+  isInArrayArray (array) {
+    for (let i = 0; i < array.length; i++) {
+      for (let j = 0; j < array[i].length; j++) {
+        if (this.equal(array[i][j])) {
+          return [i, j]
+        }
+      }
+    }
+    return null
+  }
+
+  /**
+   * Función para obtener la normar de un triangulo en
+   * 3 coordenadas (p1 - p0) X (p2 - p0).
+   * @param {Vec3} p0
+   * @param {Vec3} p1
+   * @param {Vec3} p2
+   */
+  static normals (p0, p1, p2) {
+    let v1 = p1.sub(p0)
+    let v2 = p2.sub(p0)
+    return v1.cross(v2).normalize()
+  }
+
+  /**
+   * @param {Array} array
+   */
+  static fromArray (array) {
+    return new Vec3(array[0] || 0, array[1] || 0, array[2] || 0)
   }
 }
 

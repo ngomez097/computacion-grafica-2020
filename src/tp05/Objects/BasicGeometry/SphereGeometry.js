@@ -13,14 +13,13 @@ class SphereGeometry extends Geometry {
   constructor (
     vertexRing = 32,
     rings = 32,
-    radius = 1,
-    shadeSmooth = true
+    radius = 1
   ) {
     super()
-    this.constructSphere(vertexRing, rings, radius, shadeSmooth)
+    this.constructSphere(vertexRing, rings, radius)
   }
 
-  constructSphere (vertexRing, rings, radius, shadeSmooth) {
+  constructSphere (vertexRing, rings, radius) {
     this.clearData()
     let topVertex = new Vec3(0, radius, 0)
     let bottomVertex = new Vec3(0, -radius, 0)
@@ -42,8 +41,8 @@ class SphereGeometry extends Geometry {
       angleZ = (i + 1) * dtz
       v2 = new Vec3(auxR * cos(angleZ), auxY, auxR * sin(angleZ))
       v4 = new Vec3(auxR * cos(angleZ), -auxY, auxR * sin(angleZ))
-      this.insertTriangle([topVertex, v2, v1], !shadeSmooth)
-      this.insertTriangle([bottomVertex, v3, v4], !shadeSmooth)
+      this.insertTriangle([topVertex, v2, v1], true)
+      this.insertTriangle([bottomVertex, v3, v4], true)
     }
 
     // Caras laterales
@@ -61,9 +60,12 @@ class SphereGeometry extends Geometry {
         v3 = new Vec3(auxR1 * cos(angleZ), auxY1, auxR1 * sin(angleZ))
         v4 = new Vec3(auxR * cos(angleZ), auxY, auxR * sin(angleZ))
 
-        this.insertPlane([v1, v4, v3, v2], !shadeSmooth)
+        this.insertPlane([v1, v4, v3, v2], true)
       }
     }
+
+    this.recalculateSmoothNormals()
+
     this.hasChanged = true
   }
 }

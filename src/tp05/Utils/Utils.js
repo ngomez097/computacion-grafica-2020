@@ -62,6 +62,16 @@ const clamp = function (value, min, max) {
   return value
 }
 
+/**
+ * @param {Array} array1
+ * @param {Array} array2
+ */
+const pushArrays = function (array1, array2) {
+  for (let i = 0; i < array2.length; i++) {
+    array1.push(array2[i])
+  }
+}
+
 module.exports = {
   map,
   distance,
@@ -69,5 +79,6 @@ module.exports = {
   toRadian,
   arraysEqual,
   copyArrayValues,
-  clamp
+  clamp,
+  pushArrays
 }

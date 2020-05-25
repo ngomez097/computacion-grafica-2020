@@ -11,14 +11,13 @@ class CylinderGeometry extends Geometry {
   constructor (
     radius = 1,
     heigth = 1,
-    segments = 3,
-    shadeSmooth = true
+    segments = 3
   ) {
     super()
-    this.constructCylinder(radius, heigth, segments, shadeSmooth)
+    this.constructCylinder(radius, heigth, segments)
   }
 
-  constructCylinder (radius = 1, heigth = 1, segments = 3, shadeSmooth = true) {
+  constructCylinder (radius = 1, heigth = 1, segments = 3) {
     this.clearData()
     let dt = 2 * Math.PI / segments
     let angle
@@ -38,7 +37,7 @@ class CylinderGeometry extends Geometry {
         new Vec3(xz2[0], offsetY, xz2[1]),
         new Vec3(xz2[0], -offsetY, xz2[1]),
         new Vec3(xz1[0], -offsetY, xz1[1])
-      ], !shadeSmooth)
+      ], true)
       topVertex.push(new Vec3(xz2[0], offsetY, xz2[1]))
       botommVertex.push(new Vec3(xz2[0], -offsetY, xz2[1]))
     }
@@ -48,25 +47,27 @@ class CylinderGeometry extends Geometry {
       case 3:
         this.insertTriangle([
           botommVertex[0], botommVertex[1], botommVertex[2]
-        ], true)
+        ])
         this.insertTriangle([
           topVertex[0], topVertex[2], topVertex[1]
-        ], true)
+        ])
         break
 
       case 4:
         this.insertPlane([
           botommVertex[0], botommVertex[1], botommVertex[2], botommVertex[3]
-        ], true)
+        ])
         this.insertPlane([
           topVertex[0], topVertex[3], topVertex[2], topVertex[1]
-        ], true)
+        ])
         break
 
       default:
-        this.insertNGon(botommVertex, true)
-        this.insertNGon(topVertex, true, true)
+        this.insertNGon(botommVertex, false)
+        this.insertNGon(topVertex, false, true)
     }
+
+    this.recalculateSmoothNormals()
     this.hasChanged = true
   }
 }

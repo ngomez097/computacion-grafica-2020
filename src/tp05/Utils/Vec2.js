@@ -22,8 +22,9 @@ class Vec2 {
    * @param {Vec2} vec
    */
   equal (vec) {
-    return this.x === vec.x &&
-      this.y === vec.y
+    if (this.x !== vec.x) return false
+    if (this.y !== vec.y) return false
+    return true
   }
 
   /**
@@ -75,6 +76,20 @@ class Vec2 {
    */
   distance (vec) {
     return vec2.distance(this.toArray(), vec.toArray())
+  }
+
+  /**
+   * Funcion para obtener la distancia entre 2 puntos
+   * @param {Vec2} vec
+   */
+  close (vec) {
+    if (Math.abs(this.x - vec.x) > 1e-5) {
+      return false
+    }
+    if (Math.abs(this.y - vec.y) > 1e-5) {
+      return false
+    }
+    return true
   }
 
   /**

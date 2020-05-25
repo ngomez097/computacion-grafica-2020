@@ -1,5 +1,7 @@
 const Geometry = require('./Geometry')
 const Material = require('./Material/Material')
+// eslint-disable-next-line no-unused-vars
+const Bounding = require('./Bounding/Bounding')
 
 class Mesh {
   constructor (material = new Material(), renderType = Mesh.RENDER_TYPE.TRIANGLES) {
@@ -12,6 +14,7 @@ class Mesh {
     this.renderType = renderType
     this.useNormal = true
     this.clearDepth = false
+    /** @type Bounding */this.bounding = null
   }
 
   static get RENDER_TYPE () {
@@ -28,6 +31,13 @@ class Mesh {
    */
   setGeometry (geometry) {
     this.geometry = geometry
+  }
+
+  /**
+   * @param {Bounding} bounding
+   */
+  setBounding (bounding) {
+    this.bounding = bounding
   }
 
   /**

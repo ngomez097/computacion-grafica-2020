@@ -12,20 +12,18 @@ class Cone extends ObjectScene {
   constructor (
     baseVertexCount = 3,
     radius = 1,
-    heigth = 1,
-    shadeSmooth = false
+    heigth = 1
   ) {
     super()
     this.baseVertexCount = baseVertexCount
     this.radius = radius
     this.heigth = heigth
-    this.shadeSmooth = shadeSmooth
     this.selectable = false
-    this.meshes[0].setGeometry(new ConeGeometry(heigth, baseVertexCount, radius, shadeSmooth))
+    this.meshes[0].setGeometry(new ConeGeometry(heigth, baseVertexCount, radius))
   }
 
   remesh () {
-    this.meshes[0].geometry.constructCone(this.heigth, this.baseVertexCount, this.radius, this.shadeSmooth)
+    this.meshes[0].geometry.constructCone(this.heigth, this.baseVertexCount, this.radius)
   }
 }
 
