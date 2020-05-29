@@ -6,6 +6,8 @@ const Edge = require('./Edge')
 const Face = require('./Face')
 
 const utils = require('../Utils/Utils')
+const cos = Math.cos
+const sin = Math.sin
 
 class Geometry {
   /**
@@ -199,7 +201,7 @@ class Geometry {
         )
 
         if (this.normals.length > 0) {
-          if (this.shadeSmooth) {
+          if (this.shadeSmooth && face.shadeSmooth) {
             utils.pushArrays(normals,
               face.vertexArray[i].getNormal(face.normal).toArray()
             )
@@ -322,8 +324,10 @@ class Geometry {
    * @param {Boolean} smoothShade: si se duplica el vertice.
    * @param {Boolean} flipNormal: si se dibuja la normal alrevez.
    * @param {Number} uvScale: el tamaño de la UV por defecto.
+   * @param {Array<Vec2>} uvs: arreglo de las uv.
+   * @param {Vec3} tangent: tangente de las uv.
    */
-  insertTriangle (vertices, smoothShade = false, flipNormal = false, uvScale = 1.0) {
+  insertTriangle (vertices, smoothShade = false, flipNormal = false, uvScale = 1.0, uvs = null, tangent = null) {
     if (vertices.length !== 3) {
       return
     }
@@ -333,22 +337,27 @@ class Geometry {
     let deltaUV
     let bitangent
     let vertexArray
-    let tangent
     let denominator
-    let uvs = [
-      new Vec2(0, 0),
-      new Vec2(uvScale, 0),
-      new Vec2(uvScale, uvScale),
-    ]
+    if (uvs == null) {
+      uvs = [
+        new Vec2(0, 0),
+        new Vec2(uvScale, 0),
+        new Vec2(uvScale, uvScale),
+      ]
+    }
 
     normal = Vec3.normals(vertices[0], vertices[1 + flipNormal], vertices[2 - flipNormal])
     normal = this.addNormals([normal])[0]
 
     edges = [vertices[1 + flipNormal].sub(vertices[0]), vertices[2 - flipNormal].sub(vertices[0])]
-    deltaUV = [uvs[1].sub(uvs[0]), uvs[2].sub(uvs[0])]
+    deltaUV = [uvs[1 + flipNormal].sub(uvs[0]), uvs[2 - flipNormal].sub(uvs[0])]
 
     denominator = 1.0 / (deltaUV[0].x * deltaUV[1].y - deltaUV[0].y * deltaUV[1].x)
-    tangent = (edges[0].scale(deltaUV[1].y)).sub(edges[1].scale(deltaUV[0].y)).scale(denominator)
+
+    if (tangent == null) {
+      tangent = edges[0].scale(deltaUV[1].y).sub(edges[1].scale(deltaUV[0].y)).scale(denominator)
+      tangent.normalize()
+    }
     bitangent = normal.cross(tangent)
 
     vertexArray = this.addVertices(vertices, normal)
@@ -371,7 +380,7 @@ class Geometry {
         normal,
         tangent,
         bitangent,
-        uvs,
+        [uvs[0], uvs[2 - !flipNormal], uvs[1 + !flipNormal]],
         smoothShade
       )
     )
@@ -383,8 +392,9 @@ class Geometry {
    * @param {Boolean} smoothShade: si la cara es suave.
    * @param {Boolean} flipNormal: si se dibuja la normal alrevez.
    * @param {Number} uvScale: la escala de la UV para la textura.
+   * @param {Array<Vec2>} uvs: arreglo de las uv.
    */
-  insertPlane (vertices, smoothShade = false, flipNormal = false, uvScale = 1.0) {
+  insertPlane (vertices, smoothShade = false, flipNormal = false, uvScale = 1.0, uvs = null) {
     if (vertices.length !== 4) {
       return
     }
@@ -396,12 +406,19 @@ class Geometry {
     let denominator
     let tangent
     let bitangent
-    let uvs = [
-      new Vec2(0, 0),
-      new Vec2(uvScale, 0),
-      new Vec2(uvScale, uvScale),
-      new Vec2(0, uvScale),
-    ]
+    if (uvs == null) {
+      uvs = [
+        new Vec2(0, 0),
+        new Vec2(uvScale, 0),
+        new Vec2(uvScale, uvScale),
+        new Vec2(0, uvScale),
+      ]
+    } else {
+      uvs.forEach((uv, index) => {
+        uvs[index] = uv.scale(uvScale)
+        return uv
+      })
+    }
 
     normal = Vec3.normals(vertices[0], vertices[1 + flipNormal], vertices[2 - flipNormal])
     normal = this.addNormals([normal])[0]
@@ -456,24 +473,42 @@ class Geometry {
     }
 
     let innerIndex = [0]
+    let uvs = [new Vec2(1.0, 0.5)]
+    let uv
     let isPair = vertices.length % 2 === 0
     let count = Math.floor(vertices.length / 2)
+    let da = utils.toRadian(360 / vertices.length)
 
     count -= isPair
     /* if (isPair) {
       count -= 1
     } */
 
+    const cosR = (angle) => { return 0.5 + 0.5 * cos(angle) }
+    const sinR = (angle) => { return 0.5 - 0.5 * sin(angle) }
+
     for (let i = 0; i < count; i++) {
+      uv = [
+        new Vec2(cosR(da * (i * 2)), sinR(da * i * 2)),
+        new Vec2(cosR(da * (i * 2 + 1)), sinR(da * (i * 2 + 1))),
+        new Vec2(cosR(da * (i * 2 + 2)), sinR(da * (i * 2 + 2))),
+      ]
+
       this.insertTriangle([
         vertices[i * 2], vertices[i * 2 + 1], vertices[i * 2 + 2]
-      ], smoothShade, flipNormal)
+      ], smoothShade, flipNormal, 1.0, uv)
       innerIndex.push(i * 2 + 2)
+      uvs.push(uv[2])
     }
     if (isPair) {
+      uv = [
+        new Vec2(cosR(da * (count * 2)), sinR(da * count * 2)),
+        new Vec2(cosR(da * (count * 2 + 1)), sinR(da * (count * 2 + 1))),
+        new Vec2(1, 0.5),
+      ]
       this.insertTriangle([
         vertices[count * 2], vertices[count * 2 + 1], vertices[0]
-      ], smoothShade, flipNormal)
+      ], smoothShade, flipNormal, 1.0, uv)
     }
 
     if (innerIndex.length === 3) {
@@ -481,14 +516,14 @@ class Geometry {
         vertices[innerIndex[0]],
         vertices[innerIndex[1]],
         vertices[innerIndex[2]]
-      ], false, flipNormal)
+      ], false, flipNormal, 1.0, uvs)
     } else if (innerIndex.length === 4) {
       this.insertPlane([
         vertices[innerIndex[0]],
         vertices[innerIndex[1]],
         vertices[innerIndex[2]],
         vertices[innerIndex[3]]
-      ], false, flipNormal)
+      ], false, flipNormal, 1.0, uvs)
     } else {
       let auxVertices = []
       for (let i of innerIndex) {

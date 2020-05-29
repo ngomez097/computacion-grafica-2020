@@ -97,7 +97,7 @@ const cylinderConf = {
   pos: new Vec3(2, 0, 0),
   scale: new Vec3(1),
   rotation: new Vec3(),
-  segments: 8,
+  segments: 16,
   shadeSmooth: true,
   smoothAngle: 60,
   showWireframe: false,
@@ -111,8 +111,8 @@ const sphereConf = {
   pos: new Vec3(6, 0, 0),
   scale: new Vec3(1),
   rotation: new Vec3(),
-  rings: 10,
-  vertex: 10,
+  rings: 32,
+  vertex: 32,
   radius: 1,
   shadeSmooth: true,
   smoothAngle: 60,
@@ -129,6 +129,11 @@ const ambientLightConf = {
 }
 
 // Configuracion luz direccional
+const flashligthConf = {
+  enable: true
+}
+
+// Configuracion luz direccional
 const direccionalLightConf = {
   direction: new Vec3(1.0, -1.0, 0.0),
   color: [255.0, 255.0, 255.0],
@@ -139,7 +144,7 @@ const direccionalLightConf = {
 const pointLight1Conf = {
   name: 'Point Light 1',
   pos: new Vec3(-10.0, 10.0, 6.0),
-  color: [255.0, 0.0, 50.0],
+  color: [255.0, 100.0, 100.0],
   intensity: 100,
   enable: true,
   showRepresentation: true
@@ -149,7 +154,7 @@ const pointLight1Conf = {
 const pointLight2Conf = {
   name: 'Point Light 2',
   pos: new Vec3(10.0, 10.0, 6.0),
-  color: [50.0, 0.0, 255.0],
+  color: [100.0, 100.0, 255.0],
   intensity: 100,
   enable: true,
   showRepresentation: true
@@ -159,7 +164,7 @@ const pointLight2Conf = {
 const pointLight3Conf = {
   name: 'Point Light 3',
   pos: new Vec3(0.0, 10.0, -6.0),
-  color: [50.0, 255.0, 50.0],
+  color: [100.0, 255.0, 100.0],
   intensity: 100,
   enable: true,
   showRepresentation: true
@@ -169,7 +174,7 @@ const pointLight3Conf = {
 const spotLightConf = {
   name: 'Spot Light 1',
   pos: new Vec3(0.0, 10.0, 0.0),
-  color: [255.0, 255.0, 255.0],
+  color: [240, 216, 102],
   direction: new Vec3(0.0, -1.0, 0.0),
   maxAngle: 30,
   intensity: 100,
@@ -313,10 +318,11 @@ function init (canvasName) {
   flashlight = new SpotLight(
     25,
     cameraConf.eye,
-    0,
+    100,
     new Vec3(255.0),
     new Vec3(0, -1, 0)
   )
+  flashlight.setEnable(flashligthConf.enable)
   scene.addSpotLights(flashlight)
 
   // Creacion de un piso.
@@ -325,11 +331,7 @@ function init (canvasName) {
   floor.setScale(floorConf.scale)
   scene.addObjects(floor)
   floor.meshes[0].material.useTexure = true
-  floor.meshes[0].material.texture.setDiffuse(require('./Textures/stone/rough_block_wall_diff_1k.jpg'))
-  floor.meshes[0].material.texture.setNormal(require('./Textures/stone/rough_block_wall_nor_1k.jpg'))
-  floor.meshes[0].material.texture.setRoughness(require('./Textures/stone/rough_block_wall_rough_1k.jpg'))
-  floor.meshes[0].material.texture.setAO(require('./Textures/stone/rough_block_wall_ao_1k.jpg'))
-  // floor.meshes[0].material.texture.setNormal(require('./Textures/stone/NormalMap.png'))
+  floor.meshes[0].material.texture.setFolder('Textures/stone')
 
   // Creacion de un cubo.
   cube = new Cube(2)
@@ -339,10 +341,7 @@ function init (canvasName) {
   scene.addObjects(cube)
 
   /* cube.meshes[0].material.useTexure = true
-  cube.meshes[0].material.texture.setDiffuse(require('./Textures/stone/rough_block_wall_diff_1k.jpg'))
-  cube.meshes[0].material.texture.setNormal(require('./Textures/stone/rough_block_wall_nor_1k.jpg'))
-  cube.meshes[0].material.texture.setRoughness(require('./Textures/stone/rough_block_wall_rough_1k.jpg'))
-  cube.meshes[0].material.texture.setAO(require('./Textures/stone/rough_block_wall_ao_1k.jpg')) */
+   cube.meshes[0].material.texture.setFolder('Textures/stone') */
 
   cube.conf = cubeConf
   objects.push(cube)
@@ -351,7 +350,7 @@ function init (canvasName) {
   sceneConf.selectedObj = cube
 
   // Creacion de un cono.
-  cone = new Cone(coneConf.vertex, 1, 2, coneConf.shadeSmooth)
+  cone = new Cone(coneConf.vertex, 1, 2)
   cone.selectable = coneConf.selectable
   cone.meshes[0].material.setColor(new Vec3(0.0, 1.0, 0.0))
   scene.addObjects(cone)
@@ -367,16 +366,22 @@ function init (canvasName) {
   objects.push(cone)
 
   // Creacion de un cilindro.
-  cylinder = new Cylinder(cylinderConf.segments, 1, 2, cylinderConf.shadeSmooth)
+  cylinder = new Cylinder(cylinderConf.segments, 1, 2, 5)
   cylinder.meshes[0].material.setColor(new Vec3(0.0, 0.0, 1.0))
   cylinder.selectable = cylinderConf.selectable
   scene.addObjects(cylinder)
 
   // Cylinder Bounding
   extremVertexs = cone.meshes[0].geometry.getExtremeBoxVertex()
-  bounding = new BoundingBox(extremVertexs.max, extremVertexs.min)
+  bounding = new BoundingBox(extremVertexs.min, extremVertexs.max)
   cylinder.meshes[0].setBounding(bounding)
   bounding.show = cylinderConf.showBounding
+
+  // Textura cilindro
+  cylinder.meshes[0].material.useTexure = true
+  cylinder.meshes[0].material.texture.normalStrength = 1
+  cylinder.meshes[0].material.texture.setFolder('Textures/metal_strip')
+  // Carpeta desde el root del TP5 sin el './'
 
   // Linkeando los valores del cilindro
   cylinder.conf = cylinderConf
@@ -400,11 +405,10 @@ function init (canvasName) {
   sphere.selectable = sphereConf.selectable
   scene.addObjects(sphere)
 
-  /* sphere.meshes[0].material.useTexure = true
-  sphere.meshes[0].material.texture.setDiffuse(require('./Textures/stone/rough_block_wall_diff_1k.jpg'))
-  sphere.meshes[0].material.texture.setNormal(require('./Textures/stone/rough_block_wall_nor_1k.jpg'))
-  sphere.meshes[0].material.texture.setRoughness(require('./Textures/stone/rough_block_wall_rough_1k.jpg'))
-  sphere.meshes[0].material.texture.setAO(require('./Textures/stone/rough_block_wall_ao_1k.jpg')) */
+  sphere.meshes[0].material.useTexure = true
+  sphere.meshes[0].material.texture.setDiffuse(require('./Textures/world/diff.jpg'))
+  sphere.meshes[0].material.texture.setNormal(require('./Textures/world/norm.jpg'))
+  sphere.meshes[0].material.texture.normalStrength = 0.5
 
   // Linkeando los valores de la esfera
   sphere.conf = sphereConf
@@ -493,9 +497,13 @@ function renderLoop () {
   cone.showWireframe(coneConf.showWireframe)
   cone.meshes[0].bounding.show = coneConf.showBounding
   cone.shadeSmooth(coneConf.shadeSmooth)
-  if (coneConf.vertex !== cone.baseVertexCount || coneConf.shadeSmooth !== cone.shadeSmooth) {
+  if (coneConf.vertex !== cone.baseVertexCount) {
     cone.baseVertexCount = coneConf.vertex
     cone.remesh()
+    if (cone.meshes[0].bounding instanceof BoundingBox) {
+      let res = cone.meshes[0].geometry.getExtremeBoxVertex()
+      cone.meshes[0].bounding.constructBox(res.min, res.max)
+    }
   }
   cone.showNomrals(coneConf.showNormals, 0.2)
 
@@ -508,6 +516,10 @@ function renderLoop () {
   if (cylinderConf.segments !== cylinder.segments) {
     cylinder.segments = cylinderConf.segments
     cylinder.remesh()
+    if (cylinder.meshes[0].bounding instanceof BoundingBox) {
+      let res = cylinder.meshes[0].geometry.getExtremeBoxVertex()
+      cylinder.meshes[0].bounding.constructBox(res.min, res.max)
+    }
   }
   cylinder.showNomrals(cylinderConf.showNormals, 0.2)
 
@@ -523,6 +535,10 @@ function renderLoop () {
     sphere.rings = sphereConf.rings
     sphere.vertexRing = sphereConf.vertex
     sphere.remesh()
+    if (sphere.meshes[0].bounding instanceof BoundingBox) {
+      let res = sphere.meshes[0].geometry.getExtremeBoxVertex()
+      sphere.meshes[0].bounding.constructBox(res.min, res.max)
+    }
   }
   sphere.showNomrals(sphereConf.showNormals, 0.2)
 
@@ -566,6 +582,7 @@ function renderLoop () {
 
   flashlight.setDirection(camera.getLookDirection())
   flashlight.setPosition(camera.eye)
+  flashlight.setEnable(flashligthConf.enable)
 
   // Actualizando la grilla y los ejes.
   grid.enableRender = gridConf.enable
@@ -629,7 +646,8 @@ function initGUI () {
   gui.close()
   // Grilla y Ejes
   gui.add(gridConf, 'enable').name('Show grid & axis')
-  gui.add(floor.meshes[0].material.texture, 'normalStrength', 0, 2, 0.01)
+  gui.add(floor.meshes[0].material.texture, 'normalStrength', 0, 2, 0.01).name('Floor strength')
+  gui.add(flashligthConf, 'enable').name('Flashligth')
   gui.add(fps, 'count').listen().step(0.1).name('FPS')
 
   // Objectos

@@ -7,7 +7,6 @@ class Cone extends ObjectScene {
    * @param {*} baseVertexCount Cantidad de vertices en la base.
    * @param {*} radius Radio de la base.
    * @param {*} heigth Altura del cono.
-   * @param {*} shadeSmooth Determina si se aplica smooth o flat shading.
    */
   constructor (
     baseVertexCount = 3,

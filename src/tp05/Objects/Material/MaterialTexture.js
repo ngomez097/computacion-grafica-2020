@@ -27,6 +27,19 @@ class MaterialTexture {
   setAO (AOTexture) {
     if (AOTexture) this.AOTextureSrc = AOTexture
   }
+
+  /**
+   * Funcion para pasar el directorio de las texturas, las texturas tienen que tener los siguientes nombres,
+   * diff.jpg, norm.jpg, rough.jpg, ao.jpg
+   * @param {*} folderPath directorio de la textura.
+   */
+  setFolder (folderPath) {
+    require('../../')
+    this.setDiffuse(require(`../../${folderPath}/diff.jpg`))
+    this.setNormal(require(`../../${folderPath}/norm.jpg`))
+    this.setRoughness(require(`../../${folderPath}/rough.jpg`))
+    this.setAO(require(`../../${folderPath}/ao.jpg`))
+  }
 }
 
 module.exports = MaterialTexture

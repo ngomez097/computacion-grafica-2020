@@ -30,8 +30,11 @@ struct Material {
   vec3 u_Color;
   float u_Roughness;
   sampler2D u_textureDiffuse;
+  bool u_useNormal;
   sampler2D u_textureNormal;
+  bool u_useAO;
   sampler2D u_textureAO;
+  bool u_useRoughness;
   sampler2D u_textureRoughness;
   int u_useTexture;
   float u_normalStrength;
@@ -83,15 +86,25 @@ void main(void) {
   if (material.u_UseNormal == 1) {
     if (material.u_useTexture == 1) {
       objColor = texture2D(material.u_textureDiffuse, f_textureCoordinates).rgb;
-      objColor *= texture2D(material.u_textureAO, f_textureCoordinates).rgb;
-      objNormal = texture2D(material.u_textureNormal, f_textureCoordinates).rgb;
-      objNormal = normalize((objNormal * 2.0) - vec3(1.0));
-      fixedNormal = normalize(
-        normalize(f_tangent) * objNormal.x * material.u_normalStrength+
-        normalize(f_bitangent) * objNormal.y * material.u_normalStrength+
-        normalize(f_normals) * objNormal.z 
-      );
-      objRoughness = texture2D(material.u_textureRoughness, f_textureCoordinates).r;
+      if (material.u_useAO) {
+        objColor *= texture2D(material.u_textureAO, f_textureCoordinates).rgb;
+      }
+      if (material.u_useNormal) {
+        objNormal = texture2D(material.u_textureNormal, f_textureCoordinates).rgb;
+        objNormal = normalize((objNormal * 2.0) - vec3(1.0));
+        fixedNormal = normalize(
+          normalize(f_tangent) * objNormal.x * material.u_normalStrength+
+          normalize(f_bitangent) * objNormal.y * material.u_normalStrength+
+          normalize(f_normals) * objNormal.z 
+        );
+      } else {
+        fixedNormal = normalize(f_normals);
+      }    
+      if (material.u_useRoughness) {
+        objRoughness = texture2D(material.u_textureRoughness, f_textureCoordinates).r;
+      } else {
+        objRoughness = material.u_Roughness;
+      }
     } else {
       fixedNormal = normalize(f_normals);
       objColor = material.u_Color;
@@ -123,7 +136,6 @@ void main(void) {
 
     // Luz Total.
     gl_FragColor.rgb = ambienColor + dirColor + pointColor + spotColor;
-    //gl_FragColor.rgb = fixedNormal;
     gl_FragColor.a = 1.0;
   } else {
     gl_FragColor = vec4(material.u_Color, 1.0);

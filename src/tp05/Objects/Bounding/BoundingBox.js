@@ -21,8 +21,12 @@ class BoundingBox extends Bounding {
    * @param {Vec3} max
    * @param {Vec3} min
    */
-  constructor (max, min) {
+  constructor (min, max) {
     super()
+    this.constructBox(min, max)
+  }
+
+  constructBox (min, max) {
     let scaleFactor = 1.0
     let vertexs = [
       max,
@@ -35,6 +39,8 @@ class BoundingBox extends Bounding {
       new Vec3(min.x, min.y, max.z),
     ]
     vertexs.forEach(e => e.scale(scaleFactor))
+
+    this.lines.geometry.clearData()
 
     // Arriba
     this.lines.geometry.insertLine([

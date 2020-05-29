@@ -1,5 +1,6 @@
 const Geometry = require('../Geometry')
 const Vec3 = require('../../Utils/Vec3')
+const Vec2 = require('../../Utils/Vec2')
 
 class CylinderGeometry extends Geometry {
   /**
@@ -11,35 +12,51 @@ class CylinderGeometry extends Geometry {
   constructor (
     radius = 1,
     heigth = 1,
-    segments = 3
+    segments = 3,
+    uvScale = 1.0
   ) {
     super()
-    this.constructCylinder(radius, heigth, segments)
+    this.constructCylinder(radius, heigth, segments, uvScale)
   }
 
-  constructCylinder (radius = 1, heigth = 1, segments = 3) {
+  constructCylinder (radius = 1, heigth = 1, segments = 3, uvScale = 1.0) {
     this.clearData()
     let dt = 2 * Math.PI / segments
     let angle
     let xz1, xz2
-    let botommVertex = []
-    let topVertex = []
+    let offsetY = heigth / 2.0
+    let botommVertex = [new Vec3(radius, -offsetY, 0)]
+    let topVertex = [new Vec3(radius, offsetY, 0)]
+    let du = 1.0 / segments
 
     // Caras laterales.
+    /* xz2   xz1
+    *  *----*
+    *  |    |
+    *  |    |
+    *  *----* -offsetY
+    */
     for (let i = 0; i < segments; i++) {
       angle = dt * i
       xz1 = [Math.cos(angle) * radius, Math.sin(angle) * radius]
       angle = dt * (i + 1)
       xz2 = [Math.cos(angle) * radius, Math.sin(angle) * radius]
-      let offsetY = heigth / 2.0
       this.insertPlane([
         new Vec3(xz1[0], offsetY, xz1[1]),
         new Vec3(xz2[0], offsetY, xz2[1]),
         new Vec3(xz2[0], -offsetY, xz2[1]),
         new Vec3(xz1[0], -offsetY, xz1[1])
-      ], true)
-      topVertex.push(new Vec3(xz2[0], offsetY, xz2[1]))
-      botommVertex.push(new Vec3(xz2[0], -offsetY, xz2[1]))
+      ], true, false, uvScale,
+      [
+        new Vec2(du * i, 1),
+        new Vec2(du * (i + 1), 1),
+        new Vec2(du * (i + 1), 0),
+        new Vec2(du * i, 0),
+      ])
+      if (i !== (segments - 1)) {
+        topVertex.push(new Vec3(xz2[0], offsetY, xz2[1]))
+        botommVertex.push(new Vec3(xz2[0], -offsetY, xz2[1]))
+      }
     }
 
     // Tapas superior e inferior.

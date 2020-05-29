@@ -64,8 +64,8 @@ class WebGLRender {
       'u_MVMatrix', 'u_MVInverseTransposeMatrix', 'u_VMatrix', 'u_PMatrix', 'u_ambientLight',
       'u_eyes_position', 'u_ambientLightIntensity', 'material.u_UseNormal', 'material.u_Color', 'material.u_Roughness',
       'u_numPointLights', 'u_numSpotLights', 'u_dirLight.dir', 'u_dirLight.color', 'u_dirLight.intensity',
-      'material.u_useTexture', 'material.u_textureDiffuse', 'material.u_textureNormal', 'material.u_normalStrength',
-      'material.u_textureAO', 'material.u_textureRoughness'
+      'material.u_useTexture', 'material.u_textureDiffuse', 'material.u_useNormal', 'material.u_textureNormal', 'material.u_normalStrength',
+      'material.u_useAO', 'material.u_textureAO', 'material.u_useRoughness', 'material.u_textureRoughness'
     ])
 
     this._gl.uniform1i(this.shaderAttributes['material.u_textureDiffuse'], 0)
@@ -386,6 +386,7 @@ class WebGLRender {
         // Texturas
         if (mesh.material.useTexure) {
           let texture = mesh.material.texture
+          // Creando las texturas.
           if (texture.textureHasChanged) {
             buffer = webGLUtil.createTexture(this._gl, texture.diffuseTextureSrc)
             texture.diffuseTexture = buffer
@@ -405,18 +406,28 @@ class WebGLRender {
             texture.textureHasChanged = false
           }
 
-          webGLUtil.bindTexture(this._gl, texture.diffuseTexture, this._gl.TEXTURE0)
+          // Estableciendo las texturas.
+          webGLUtil.bindTexture(this._gl, texture.diffuseTexture)
           if (texture.normalTexture) {
             webGLUtil.bindTexture(this._gl, texture.normalTexture, this._gl.TEXTURE1)
             webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_normalStrength'], texture.normalStrength)
+            webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_useNormal'], true)
+          } else {
+            webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_useNormal'], false)
           }
 
           if (texture.AOTexture) {
             webGLUtil.bindTexture(this._gl, texture.AOTexture, this._gl.TEXTURE2)
+            webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_useAO'], true)
+          } else {
+            webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_useAO'], false)
           }
 
           if (texture.roughnessTexture) {
             webGLUtil.bindTexture(this._gl, texture.roughnessTexture, this._gl.TEXTURE3)
+            webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_useRoughness'], true)
+          } else {
+            webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_useRoughness'], false)
           }
 
           webGLUtil.setUniformLocation(this._gl, this.shaderAttributes['material.u_useTexture'], true)
