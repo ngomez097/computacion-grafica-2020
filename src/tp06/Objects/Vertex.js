@@ -7,10 +7,10 @@ class Vertex {
    */
   constructor (vertex = new Vec3(), normal = new Vec3(0.0, 1.0)) {
     this.vertex = vertex
+    /** @type {Array<Vec3>} */this.normals = []
+
     if (normal != null) {
-      this.normals = [normal]
-    } else {
-      this.normals = []
+      this.normals.push(normal)
     }
     this.smoothNormals = null
   }
@@ -26,8 +26,11 @@ class Vertex {
    * @param {Vec3} normal
    */
   addNormal (normal) {
+    if (normal == null) {
+      return
+    }
     if (!(normal instanceof Vec3)) {
-      console.error('normal is not instance of Vec3')
+      console.error('normal is not instance of Vec3', normal)
       return
     }
     if (!normal.isInArray(this.normals)) {

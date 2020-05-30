@@ -8,19 +8,20 @@ const Face = require('./Face')
 const utils = require('../Utils/Utils')
 const cos = Math.cos
 const sin = Math.sin
+const FIXED_SIZE = 2
 
 class Geometry {
   /**
    * @param {Geometry.TYPE} type Es el tipo de geometria que se define, DEFAULT = Geometry.TYPE.3D
    */
   constructor (type = Geometry.TYPE['3D']) {
-    /** @type Array<Vertex> */this.vertices = []
+    /** @type Map<Number, Array<Vertex>> */this.vertices = new Map()
     /** @type Array<Face> */this.faces = []
-    /** @type Array<Vec3> */this.normals = []
+    /** @type Map<Number, Array<Vec3>> */this.normals = new Map()
     /** @type Array<Edge> */this.edges = []
-    /** @type Array<Vec2> */this.coordinates = []
-    /** @type Array<Vec3> */this.tangents = []
-    /** @type Array<Vec3> */this.bitangents = []
+    /** @type Map<Number, Array<Vec2>> */this.coordinates = new Map()
+    /** @type Map<Number, Array<Vec3> */this.tangents = new Map()
+    /** @type Map<Number, Array<Vec3> */this.bitangents = new Map()
     this.type = type
     this.verticesBuffer = null
     this.normalsBuffer = null
@@ -29,7 +30,7 @@ class Geometry {
     this.coordinatesBuffer = null
     this.tangentsBuffer = null
     this.bitangentsBuffer = null
-    this.shadeSmooth = true
+    this.shadeSmooth = false
     this.hasChanged = true
     this.smoothAngle = 0.0
   }
@@ -42,45 +43,48 @@ class Geometry {
   }
 
   addToArray (newValues, array, checkForDuplicated = true) {
-    let auxIndex = array.length
-    let found = false
-    let values = []
-    let i
-    for (let value of newValues) {
-      // Buscando duplicados
-      if (checkForDuplicated) {
-        for (i = auxIndex - 1; i >= 0; i -= 1) {
-          if (
-            value.close(array[i])
-          ) {
-            values.push(array[i])
-
-            if (value instanceof Vertex && value.normals[0]) {
-              array[i].addNormal(value.normals[0])
+    let key, index
+    let elementArray
+    let insertedElements = []
+    let element
+    let found
+    for (let newValue of newValues) {
+      if (newValue instanceof Vertex) {
+        key = newValue.vertex.x.toFixed(FIXED_SIZE)
+      } else {
+        key = newValue.x.toFixed(FIXED_SIZE)
+      }
+      elementArray = array.get(key)
+      if (elementArray == null) {
+        array.set(key, [newValue])
+      } else if (checkForDuplicated) {
+        found = false
+        for (index = 0; index < elementArray.length; index++) {
+          element = elementArray[index]
+          if (element.close(newValue)) {
+            if (element instanceof Vertex && newValue instanceof Vertex) {
+              element.addNormal(newValue.normals[0])
             }
-
+            newValue = element
             found = true
             break
           }
         }
-        if (found) {
-          found = false
-          continue
+        if (!found) {
+          elementArray.push(newValue)
         }
+      } else {
+        elementArray.push(newValue)
       }
-
-      array.push(value)
-
-      values.push(value)
-      auxIndex++
+      insertedElements.push(newValue)
     }
-    return values
+    return insertedElements
   }
 
   /**
    * Funcion que agrega vertices al arreglo de vertices y busca si ya esta insertado.
    * @param {Array<Vec3>} vertices Un arreglo de vertices.
-   * @param {Vec3} normal Un arreglo de vertices.
+   * @param {Vec3} normal Un la normal de los vertices.
    * @param {Boolean} checkForDuplicated Si se comprueba la existencia del vertice.
    * @returns {Array<Vertex>} Un arreglo que contiene los vertices que pertenecen a la geometria.
    */
@@ -158,9 +162,11 @@ class Geometry {
   }
 
   recalculateSmoothNormals () {
-    for (let vertex of this.vertices) {
-      vertex.recalculateSmoothNormal(this.smoothAngle)
-    }
+    this.vertices.forEach(vertexArray => {
+      for (let vertex of vertexArray) {
+        vertex.recalculateSmoothNormal(this.smoothAngle)
+      }
+    })
   }
 
   setSmoothAngle (angle) {
@@ -201,7 +207,7 @@ class Geometry {
           face.vertexArray[i].vertex.toArray()
         )
 
-        if (this.normals.length > 0) {
+        if (this.normals.size > 0) {
           if (this.shadeSmooth && face.shadeSmooth) {
             arr = face.vertexArray[i].getNormal(face.normal)
             arr = arr != null ? arr.toArray() : face.normal.toArray()
@@ -213,19 +219,19 @@ class Geometry {
           }
         }
 
-        if (this.tangents.length > 0) {
+        if (this.tangents.size > 0) {
           utils.pushArrays(tangents,
             face.tangent.toArray()
           )
         }
 
-        if (this.bitangents.length > 0) {
+        if (this.bitangents.size > 0) {
           utils.pushArrays(bitangents,
             face.bitangent.toArray()
           )
         }
 
-        if (this.coordinates.length > 0) {
+        if (this.coordinates.size > 0) {
           utils.pushArrays(uvs,
             face.uvArray[i].toArray()
           )
@@ -240,27 +246,6 @@ class Geometry {
       tangents: tangents,
       bitangents: bitangents
     }
-  }
-
-  /**
-   * Funcion para obtener un vertice.
-   * @param  {Number} index El indice del vertice
-   */
-  getVerticeArray (index) {
-    return this.vertices[index].vertex.toArray()
-  }
-
-  /**
-   * Funcion para obtener los vertices.
-   * @param  {...Number} index Los indices para obtener los vertices.
-   */
-  getVertices (...index) {
-    let vertices = []
-    for (let i of index) {
-      vertices.push(this.vertices[i].vertex.clone())
-    }
-
-    return vertices
   }
 
   /**
@@ -291,13 +276,13 @@ class Geometry {
    * Funcion para limpiar los datos de la geometria.
    */
   clearData () {
-    this.vertices = []
+    this.vertices.clear()
     this.faces = []
-    this.normals = []
+    this.normals.clear()
     this.edges = []
-    this.coordinates = []
-    this.tangents = []
-    this.bitangents = []
+    this.coordinates.clear()
+    this.tangents.clear()
+    this.bitangents.clear()
     this.hasChanged = true
   }
 
@@ -523,21 +508,20 @@ class Geometry {
     if (this.vertices.length === 0) {
       return null
     }
-    let max = this.vertices[0].vertex.clone()
-    let min = this.vertices[0].vertex.clone()
-    let length = this.vertices.length
+    let max = this.vertices.values().next().value[0].vertex.clone()
+    let min = max.clone()
     let vertex
-    for (let i = 1; i < length; i++) {
-      vertex = this.vertices[i].vertex
-      max.x = Math.max(max.x, vertex.x)
+    this.vertices.forEach(vertexArray => {
+      for (vertex of vertexArray) {
+        max.x = Math.max(max.x, vertex.x)
+        max.y = Math.max(max.y, vertex.y)
+        max.z = Math.max(max.z, vertex.z)
 
-      max.y = Math.max(max.y, vertex.y)
-      max.z = Math.max(max.z, vertex.z)
-
-      min.x = Math.min(min.x, vertex.x)
-      min.y = Math.min(min.y, vertex.y)
-      min.z = Math.min(min.z, vertex.z)
-    }
+        min.x = Math.min(min.x, vertex.x)
+        min.y = Math.min(min.y, vertex.y)
+        min.z = Math.min(min.z, vertex.z)
+      }
+    })
     return {
       max: max,
       min: min

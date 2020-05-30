@@ -21,6 +21,9 @@ class Vec3 {
     }
   }
 
+  /**
+   * Funcion que devuelve el vector en un arreglo [x, y, z]
+   */
   toArray () {
     return [this.x, this.y, this.z]
   }
@@ -35,6 +38,9 @@ class Vec3 {
     return true
   }
 
+  /**
+   * Funcion para calcular el largo del vector.
+   */
   length () {
     return (this.x ** 2 + this.y ** 2 + this.z ** 2) ** 0.5
   }

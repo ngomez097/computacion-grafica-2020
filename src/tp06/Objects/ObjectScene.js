@@ -72,18 +72,20 @@ class ObjectScene extends ObjectProperty {
         mesh
       )
 
-      this.meshes[0].geometry.vertices.forEach(vertex => {
-        if (this.meshes[0].geometry.shadeSmooth) {
-          normalArray = vertex.smoothNormals
-        } else {
-          normalArray = vertex.normals
+      this.meshes[0].geometry.vertices.forEach(vertexArray => {
+        for (let vertex of vertexArray) {
+          if (this.meshes[0].geometry.shadeSmooth) {
+            normalArray = vertex.smoothNormals
+          } else {
+            normalArray = vertex.normals
+          }
+          normalArray.forEach(normal => {
+            mesh.geometry.insertLine([
+              vertex.vertex,
+              vertex.vertex.add(normal.scale(length))
+            ])
+          })
         }
-        normalArray.forEach(normal => {
-          mesh.geometry.insertLine([
-            vertex.vertex,
-            vertex.vertex.add(normal.scale(length))
-          ])
-        })
       })
     }
     if (active !== this.showNomrals) {

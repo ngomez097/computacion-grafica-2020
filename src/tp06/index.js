@@ -341,13 +341,23 @@ function init (canvasName) {
       return
     }
     obj.shadeSmooth(true)
-    obj.meshes[0].material.color = new Vec3(0.01, 0.01, 0.01)
-    obj.meshes[0].material.roughness = 0.2
     obj.meshes[0].material.useTexure = true
     obj.meshes[0].material.texture.setDiffuse(require('./Textures/vader/diff.jpg'))
     obj.meshes[0].material.texture.setRoughness(require('./Textures/vader/rough.jpg'))
     obj.translation.x = 2
     obj.translation.y = 1.4
+    scene.addObjects(obj)
+  })
+
+  objProm = ImporterOBJ.importOBJ(require('./Import/teapot.obj'), 0)
+  objProm.then(obj => {
+    if (obj == null) {
+      return
+    }
+    obj.translation.x = -6
+    obj.translation.y = 1.0
+    obj.meshes[0].material.roughness = 0.2
+    obj.scale = obj.scale.scale(0.5)
     scene.addObjects(obj)
   })
 

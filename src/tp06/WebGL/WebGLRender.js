@@ -226,15 +226,6 @@ class WebGLRender {
             normal = face.normal
 
             rayToPlane = vertices[0].sub(position)
-
-            /* const Ray = require('../Objects/Primitives/Ray')
-            let ray = new Ray(vertices[0], normal, 0.5, [1.0, 1.0, 1.0])
-            scene.addObjects(ray)
-            ray = new Ray(vertices[1], normal, 0.5, [1.0, 1.0, 1.0])
-            scene.addObjects(ray)
-            ray = new Ray(vertices[2], normal, 0.5, [1.0, 1.0, 1.0])
-            scene.addObjects(ray) */
-
             vp = direction.dot(normal)
             if (vp > -1e-16) {
               continue
