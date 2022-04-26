@@ -1,43 +1,43 @@
-const WebGLRender = require('./WebGL/WebGLRender')
-const Scene = require('./WebGL/Scene')
-const Axis = require('./Axis/Axis')
-const PerspectiveCamera = require('./Camera/PerspectiveCamera')
-const OrthographicCamera = require('./Camera/OrthographicCamera')
-const Grid = require('./Objects/Primitives/GridFloor')
-const Cube = require('./Objects/Primitives/Cube')
-const Cone = require('./Objects/Primitives/Cone')
-const Cylinder = require('./Objects/Primitives/Cylinder')
-const Sphere = require('./Objects/Primitives/Sphere')
-const DirLight = require('./Light/DirLight')
-const AmbientLight = require('./Light/AmbientLight')
-const PointLight = require('./Light/PointLight')
-const SpotLight = require('./Light/SpotLight')
-const FPSControl = require('./Control/FPSControl')
-const BoundingBox = require('./Objects/Bounding/BoundingBox')
-const Vec3 = require('./Utils/Vec3')
-const ImporterOBJ = require('./Import/objImporter')
+const WebGLRender = require("./WebGL/WebGLRender");
+const Scene = require("./WebGL/Scene");
+const Axis = require("./Axis/Axis");
+const PerspectiveCamera = require("./Camera/PerspectiveCamera");
+const OrthographicCamera = require("./Camera/OrthographicCamera");
+const Grid = require("./Objects/Primitives/GridFloor");
+const Cube = require("./Objects/Primitives/Cube");
+const Cone = require("./Objects/Primitives/Cone");
+const Cylinder = require("./Objects/Primitives/Cylinder");
+const Sphere = require("./Objects/Primitives/Sphere");
+const DirLight = require("./Light/DirLight");
+const AmbientLight = require("./Light/AmbientLight");
+const PointLight = require("./Light/PointLight");
+const SpotLight = require("./Light/SpotLight");
+const FPSControl = require("./Control/FPSControl");
+const BoundingBox = require("./Objects/Bounding/BoundingBox");
+const Vec3 = require("./Utils/Vec3");
+const ImporterOBJ = require("./Import/objImporter");
 
 // eslint-disable-next-line no-unused-vars
-const SceneObject = require('./Objects/ObjectScene')
+const SceneObject = require("./Objects/ObjectScene");
 
-const dat = require('dat.gui')
+const dat = require("dat.gui");
 
-console.log('tp06')
+console.log("tp06");
 
 // Variables utilizadas para la animacion del cubo.
-let angle
-let face
-let maxAngle
+let angle;
+let face;
+let maxAngle;
 
-let fps = { count: 0 }
-let latstTime
+let fps = { count: 0 };
+let latstTime;
 
 // Objeto con las opciones de la escena.
 const sceneConf = {
   colorBackground: new Vec3(0.0),
   selectedObj: null,
-  enablePositionalLights: true
-}
+  enablePositionalLights: true,
+};
 
 // Objeto con las opciones de la camara.
 const cameraConf = {
@@ -46,27 +46,27 @@ const cameraConf = {
   center: new Vec3(),
   useOrthographicCamera: false,
   useLookAt: false,
-}
+};
 
 // Objeto con la cofiguracion de la grilla.
 const gridConf = {
   size: 20.0,
   gap: 1.0,
-  enable: false
-}
+  enable: false,
+};
 
 // Objeto con la cofiguracion de los ejes.
 const axisConf = {
   size: 10,
-  show_axis: [true, true, true]
-}
+  show_axis: [true, true, true],
+};
 
 // Objecto para la configuracion del piso.
 const floorConf = {
   pos: new Vec3(0.0, 23.0, 0.0),
   size: 50.0,
   scale: new Vec3(1.0, 1.0, 1.0),
-}
+};
 
 // Objeto con las opciones del cubo.
 const cubeConf = {
@@ -77,8 +77,8 @@ const cubeConf = {
   showWireframe: false,
   useQuaternion: false,
   anim: false,
-  selectable: true
-}
+  selectable: true,
+};
 
 // Objeto con las opciones del cono.
 const coneConf = {
@@ -90,8 +90,8 @@ const coneConf = {
   showWireframe: false,
   selectable: true,
   showBounding: true,
-  showNormals: false
-}
+  showNormals: false,
+};
 
 // Objeto con las opciones del cilindro.
 const cylinderConf = {
@@ -104,8 +104,8 @@ const cylinderConf = {
   showWireframe: false,
   selectable: true,
   showNormals: false,
-  showBounding: false
-}
+  showBounding: false,
+};
 
 // Objeto con las opciones de la esfera.
 const sphereConf = {
@@ -120,95 +120,95 @@ const sphereConf = {
   showWireframe: false,
   selectable: true,
   showBounding: false,
-  showNormals: false
-}
+  showNormals: false,
+};
 
 // Configuracion luz direccional
 const ambientLightConf = {
   color: [255.0, 255.0, 255.0],
-  intensity: 0.01
-}
+  intensity: 0.01,
+};
 
 // Configuracion luz direccional
 const flashligthConf = {
-  enable: true
-}
+  enable: true,
+};
 
 // Configuracion luz direccional
 const direccionalLightConf = {
   direction: new Vec3(1.0, -1.0, 0.0),
   color: [255.0, 255.0, 255.0],
-  intensity: 0.01
-}
+  intensity: 0.01,
+};
 
 // Configuracion luz puntual 1
 const pointLight1Conf = {
-  name: 'Point Light 1',
+  name: "Point Light 1",
   pos: new Vec3(-10.0, 10.0, 6.0),
   color: [255.0, 100.0, 100.0],
   intensity: 100,
   enable: true,
-  showRepresentation: true
-}
+  showRepresentation: true,
+};
 
 // Configuracion luz puntual 2
 const pointLight2Conf = {
-  name: 'Point Light 2',
+  name: "Point Light 2",
   pos: new Vec3(10.0, 10.0, 6.0),
   color: [100.0, 100.0, 255.0],
   intensity: 100,
   enable: true,
-  showRepresentation: true
-}
+  showRepresentation: true,
+};
 
 // Configuracion luz puntual 3
 const pointLight3Conf = {
-  name: 'Point Light 3',
+  name: "Point Light 3",
   pos: new Vec3(0.0, 10.0, -6.0),
   color: [100.0, 255.0, 100.0],
   intensity: 100,
   enable: true,
-  showRepresentation: true
-}
+  showRepresentation: true,
+};
 
 // Configuracion del Spot Light
 const spotLightConf = {
-  name: 'Spot Light 1',
+  name: "Spot Light 1",
   pos: new Vec3(0.0, 10.0, 0.0),
   color: [240, 216, 102],
   direction: new Vec3(0.0, -1.0, 0.0),
   maxAngle: 30,
   intensity: 100,
   enable: true,
-  showRepresentation: true
-}
+  showRepresentation: true,
+};
 
-/** @type WebGLRender */ let wegGLRender
-/** @type Scene */ let scene
-/** @type Grid */ let grid
-/** @type Axis */ let axis
-/** @type PerspectiveCamera */ let camera
-/** @type Cube */ let floor
-/** @type Cube */ let cube
-/** @type Cone */ let cone
-/** @type Sphere */ let sphere
-/** @type Cylinder */ let cylinder
-/** @type HTMLCanvasElement */ let canvas
-/** @type FPSControl */ let control
-/** @type SpotLight */ let flashlight
-let Lights = []
-let objects = []
+/** @type WebGLRender */ let wegGLRender;
+/** @type Scene */ let scene;
+/** @type Grid */ let grid;
+/** @type Axis */ let axis;
+/** @type PerspectiveCamera */ let camera;
+/** @type Cube */ let floor;
+/** @type Cube */ let cube;
+/** @type Cone */ let cone;
+/** @type Sphere */ let sphere;
+/** @type Cylinder */ let cylinder;
+/** @type HTMLCanvasElement */ let canvas;
+/** @type FPSControl */ let control;
+/** @type SpotLight */ let flashlight;
+let Lights = [];
+let objects = [];
 
 console.log(
-  'Controles\n' +
-  '- Right click:  entrar en modo Fly.\n' +
-  '- Left click:   se lanza un rayo de prueba.\n' +
-  '- w / s:        mover hacia al frente / atras de la camara.\n' +
-  '- a / d:        mover hacia la izquierda / derecha de la camara.\n' +
-  '- Space / Ctrl: subir / bajar la camara.\n' +
-  '- q / e:        Roll de la camara.\n' +
-  '- Hold shift:   mover mas rapido la camara.\n'
-)
+  "Controles\n" +
+    "- Right click:  entrar en modo Fly.\n" +
+    "- Left click:   se lanza un rayo de prueba.\n" +
+    "- w / s:        mover hacia al frente / atras de la camara.\n" +
+    "- a / d:        mover hacia la izquierda / derecha de la camara.\n" +
+    "- Space / Ctrl: subir / bajar la camara.\n" +
+    "- q / e:        Roll de la camara.\n" +
+    "- Hold shift:   mover mas rapido la camara.\n"
+);
 let keyPressed = {
   w: false,
   a: false,
@@ -216,41 +216,44 @@ let keyPressed = {
   d: false,
   q: false,
   e: false,
-  shift: false
-}
+  shift: false,
+};
 
-function init (canvasName) {
-  canvas = document.getElementById(canvasName)
-  wegGLRender = new WebGLRender(canvas)
+function init(canvasName) {
+  canvas = document.getElementById(canvasName);
+  wegGLRender = new WebGLRender(canvas);
 
   // Creacion de la camara.
-  camera = new PerspectiveCamera(cameraConf.fov, canvas.clientWidth / canvas.clientHeight)
-  window.addEventListener('resize', e => {
+  camera = new PerspectiveCamera(
+    cameraConf.fov,
+    canvas.clientWidth / canvas.clientHeight
+  );
+  window.addEventListener("resize", (e) => {
     if (camera instanceof PerspectiveCamera) {
-      camera.requireProyectionMatrixUpdate()
+      camera.requireProyectionMatrixUpdate();
     }
-  })
+  });
 
   // Creando la escena.
-  scene = new Scene(sceneConf.colorBackground)
+  scene = new Scene(sceneConf.colorBackground);
 
   // Creando el control de la camara.
-  control = new FPSControl()
+  control = new FPSControl();
 
   // Linkeando los valores de la camara.
-  camera.setPosition(cameraConf.eye)
-  camera.setLookAt(cameraConf.center)
-  camera.addPitch(control.fpsConf.rpy[1])
+  camera.setPosition(cameraConf.eye);
+  camera.setLookAt(cameraConf.center);
+  camera.addPitch(control.fpsConf.rpy[1]);
 
   // Creacion de la grilla
-  grid = new Grid(20)
-  grid.enableRender = gridConf.enable
-  scene.addObjects(grid)
+  grid = new Grid(20);
+  grid.enableRender = gridConf.enable;
+  scene.addObjects(grid);
 
   // Creacion de los ejes
-  axis = new Axis(axisConf.size, axisConf.show_axis)
-  axis.enableRender = gridConf.enable
-  scene.addObjects(axis)
+  axis = new Axis(axisConf.size, axisConf.show_axis);
+  axis.enableRender = gridConf.enable;
+  scene.addObjects(axis);
 
   // Insertando luces.
   // Luz direccional.
@@ -258,15 +261,15 @@ function init (canvasName) {
     direccionalLightConf.intensity,
     direccionalLightConf.direction,
     Vec3.fromArray(direccionalLightConf.color)
-  )
-  scene.dirLight = dirLight
+  );
+  scene.dirLight = dirLight;
 
   // Luz ambiental.
   let ambientLight = new AmbientLight(
     Vec3.fromArray(ambientLightConf.color),
     ambientLightConf.intensity
-  )
-  scene.ambientLight = ambientLight
+  );
+  scene.ambientLight = ambientLight;
 
   // Luces puntuales.
   // Luz 1
@@ -275,10 +278,10 @@ function init (canvasName) {
     pointLight1Conf.intensity,
     Vec3.fromArray(pointLight1Conf.color),
     new Cube(0.25)
-  )
-  Lights[0].conf = pointLight1Conf
-  Lights[0].enable = pointLight1Conf.enable
-  scene.addPointLights(Lights[0])
+  );
+  Lights[0].conf = pointLight1Conf;
+  Lights[0].enable = pointLight1Conf.enable;
+  scene.addPointLights(Lights[0]);
 
   // Luz 2
   Lights[1] = new PointLight(
@@ -286,10 +289,10 @@ function init (canvasName) {
     pointLight2Conf.intensity,
     Vec3.fromArray(pointLight2Conf.color),
     new Cube(0.25)
-  )
-  Lights[1].conf = pointLight2Conf
-  Lights[1].enable = pointLight2Conf.enable
-  scene.addPointLights(Lights[1])
+  );
+  Lights[1].conf = pointLight2Conf;
+  Lights[1].enable = pointLight2Conf.enable;
+  scene.addPointLights(Lights[1]);
 
   // Luz 3
   Lights[2] = new PointLight(
@@ -297,10 +300,10 @@ function init (canvasName) {
     pointLight3Conf.intensity,
     Vec3.fromArray(pointLight3Conf.color),
     new Cube(0.25)
-  )
-  Lights[2].conf = pointLight3Conf
-  Lights[2].enable = pointLight3Conf.enable
-  scene.addPointLights(Lights[2])
+  );
+  Lights[2].conf = pointLight3Conf;
+  Lights[2].enable = pointLight3Conf.enable;
+  scene.addPointLights(Lights[2]);
 
   // Lampara
   Lights[3] = new SpotLight(
@@ -310,10 +313,10 @@ function init (canvasName) {
     Vec3.fromArray(spotLightConf.color),
     spotLightConf.direction,
     new Cube(0.25)
-  )
-  Lights[3].conf = spotLightConf
-  Lights[3].enable = spotLightConf.enable
-  scene.addSpotLights(Lights[3])
+  );
+  Lights[3].conf = spotLightConf;
+  Lights[3].enable = spotLightConf.enable;
+  scene.addSpotLights(Lights[3]);
 
   // Flashlight
   flashlight = new SpotLight(
@@ -322,98 +325,102 @@ function init (canvasName) {
     25,
     new Vec3(255.0),
     new Vec3(0, -1, 0)
-  )
-  flashlight.setEnable(flashligthConf.enable)
-  scene.addSpotLights(flashlight)
+  );
+  flashlight.setEnable(flashligthConf.enable);
+  scene.addSpotLights(flashlight);
 
   // Creacion de un piso.
-  floor = new Cube(floorConf.size, true)
-  floor.setTraslation(floorConf.pos)
-  floor.setScale(floorConf.scale)
-  scene.addObjects(floor)
-  floor.meshes[0].material.useTexure = true
-  floor.meshes[0].material.texture.setFolder('Textures/stone')
+  floor = new Cube(floorConf.size, true);
+  floor.setTraslation(floorConf.pos);
+  floor.setScale(floorConf.scale);
+  scene.addObjects(floor);
+  floor.meshes[0].material.useTexure = true;
+  floor.meshes[0].material.texture.setFolder("Textures/stone");
 
   // Importacion de un objeto OBJ.
-  let objProm = ImporterOBJ.importOBJ(require('./Import/Vader.obj'), 0)
-  objProm.then(obj => {
+  let objProm = ImporterOBJ.importOBJ(require("./Import/Vader.obj"), 0);
+  objProm.then((obj) => {
     if (obj == null) {
-      return
+      return;
     }
-    obj.shadeSmooth(true)
-    obj.meshes[0].material.useTexure = true
-    obj.meshes[0].material.texture.setDiffuse(require('./Textures/vader/diff.jpg'))
-    obj.meshes[0].material.texture.setRoughness(require('./Textures/vader/rough.jpg'))
-    obj.translation.x = 2
-    obj.translation.y = 1.4
-    scene.addObjects(obj)
-  })
+    obj.shadeSmooth(true);
+    obj.meshes[0].material.useTexure = true;
+    obj.meshes[0].material.texture.setDiffuse(
+      require("./Textures/vader/diff.jpg")
+    );
+    obj.meshes[0].material.texture.setRoughness(
+      require("./Textures/vader/rough.jpg")
+    );
+    obj.translation.x = 2;
+    obj.translation.y = 1.4;
+    scene.addObjects(obj);
+  });
 
-  objProm = ImporterOBJ.importOBJ(require('./Import/teapot.obj'), 0)
-  objProm.then(obj => {
+  objProm = ImporterOBJ.importOBJ(require("./Import/teapot.obj"), 0);
+  objProm.then((obj) => {
     if (obj == null) {
-      return
+      return;
     }
-    obj.translation.x = -6
-    obj.translation.y = 1.0
-    obj.meshes[0].material.roughness = 0.2
-    obj.scale = obj.scale.scale(0.5)
-    scene.addObjects(obj)
-  })
+    obj.translation.x = -6;
+    obj.translation.y = 1.0;
+    obj.meshes[0].material.roughness = 0.2;
+    obj.scale = obj.scale.scale(0.5);
+    scene.addObjects(obj);
+  });
 
   // Creacion de un cubo.
-  cube = new Cube(2)
-  cube.meshes[0].material.setColor(new Vec3(1.0, 0.0, 0.0))
-  cube.showLocalAxis = true
-  cube.selectable = cubeConf.selectable
-  scene.addObjects(cube)
+  cube = new Cube(2);
+  cube.meshes[0].material.setColor(new Vec3(1.0, 0.0, 0.0));
+  cube.showLocalAxis = true;
+  cube.selectable = cubeConf.selectable;
+  scene.addObjects(cube);
 
   /* cube.meshes[0].material.useTexure = true
    cube.meshes[0].material.texture.setFolder('Textures/stone') */
 
-  cube.conf = cubeConf
-  objects.push(cube)
+  cube.conf = cubeConf;
+  objects.push(cube);
 
   // Seleccionando el cubo como el objeto activo.
-  sceneConf.selectedObj = cube
+  sceneConf.selectedObj = cube;
 
   // Creacion de un cono.
-  cone = new Cone(coneConf.vertex, 1, 2)
-  cone.selectable = coneConf.selectable
-  cone.meshes[0].material.setColor(new Vec3(0.0, 1.0, 0.0))
-  scene.addObjects(cone)
+  cone = new Cone(coneConf.vertex, 1, 2);
+  cone.selectable = coneConf.selectable;
+  cone.meshes[0].material.setColor(new Vec3(0.0, 1.0, 0.0));
+  scene.addObjects(cone);
 
-  cone.conf = coneConf
+  cone.conf = coneConf;
 
   // Cone Bounding
-  let extremVertexs = cone.meshes[0].geometry.getExtremeBoxVertex()
-  let bounding = new BoundingBox(extremVertexs.max, extremVertexs.min)
-  cone.meshes[0].setBounding(bounding)
-  bounding.show = coneConf.showBounding
+  let extremVertexs = cone.meshes[0].geometry.getExtremeBoxVertex();
+  let bounding = new BoundingBox(extremVertexs.max, extremVertexs.min);
+  cone.meshes[0].setBounding(bounding);
+  bounding.show = coneConf.showBounding;
 
-  objects.push(cone)
+  objects.push(cone);
 
   // Creacion de un cilindro.
-  cylinder = new Cylinder(cylinderConf.segments, 1, 2, 5)
-  cylinder.meshes[0].material.setColor(new Vec3(0.0, 0.0, 1.0))
-  cylinder.selectable = cylinderConf.selectable
-  scene.addObjects(cylinder)
+  cylinder = new Cylinder(cylinderConf.segments, 1, 2, 5);
+  cylinder.meshes[0].material.setColor(new Vec3(0.0, 0.0, 1.0));
+  cylinder.selectable = cylinderConf.selectable;
+  scene.addObjects(cylinder);
 
   // Cylinder Bounding
-  extremVertexs = cylinder.meshes[0].geometry.getExtremeBoxVertex()
-  bounding = new BoundingBox(extremVertexs.min, extremVertexs.max)
-  cylinder.meshes[0].setBounding(bounding)
-  bounding.show = cylinderConf.showBounding
+  extremVertexs = cylinder.meshes[0].geometry.getExtremeBoxVertex();
+  bounding = new BoundingBox(extremVertexs.min, extremVertexs.max);
+  cylinder.meshes[0].setBounding(bounding);
+  bounding.show = cylinderConf.showBounding;
 
   // Textura cilindro
-  cylinder.meshes[0].material.useTexure = true
-  cylinder.meshes[0].material.texture.normalStrength = 1
-  cylinder.meshes[0].material.texture.setFolder('Textures/metal_strip')
+  cylinder.meshes[0].material.useTexure = true;
+  cylinder.meshes[0].material.texture.normalStrength = 1;
+  cylinder.meshes[0].material.texture.setFolder("Textures/metal_strip");
   // Carpeta desde el root del TP5 sin el './'
 
   // Linkeando los valores del cilindro
-  cylinder.conf = cylinderConf
-  objects.push(cylinder)
+  cylinder.conf = cylinderConf;
+  objects.push(cylinder);
 
   // Creacion de una esfera.
   sphere = new Sphere(
@@ -421,416 +428,437 @@ function init (canvasName) {
     sphereConf.rings,
     sphereConf.radius,
     sphereConf.shadeSmooth
-  )
+  );
 
   // Sphere Bounding
-  extremVertexs = cone.meshes[0].geometry.getExtremeBoxVertex()
-  bounding = new BoundingBox(extremVertexs.max, extremVertexs.min)
-  sphere.meshes[0].setBounding(bounding)
-  bounding.show = sphereConf.showBounding
+  extremVertexs = cone.meshes[0].geometry.getExtremeBoxVertex();
+  bounding = new BoundingBox(extremVertexs.max, extremVertexs.min);
+  sphere.meshes[0].setBounding(bounding);
+  bounding.show = sphereConf.showBounding;
 
-  sphere.meshes[0].material.setColor(new Vec3(1.0, 1.0, 1.0))
-  sphere.selectable = sphereConf.selectable
-  scene.addObjects(sphere)
+  sphere.meshes[0].material.setColor(new Vec3(1.0, 1.0, 1.0));
+  sphere.selectable = sphereConf.selectable;
+  scene.addObjects(sphere);
 
-  sphere.meshes[0].material.useTexure = true
-  sphere.meshes[0].material.texture.setDiffuse(require('./Textures/world/diff.jpg'))
-  sphere.meshes[0].material.texture.setNormal(require('./Textures/world/norm.jpg'))
-  sphere.meshes[0].material.texture.normalStrength = 0.5
+  sphere.meshes[0].material.useTexure = true;
+  sphere.meshes[0].material.texture.setDiffuse(
+    require("./Textures/world/diff.jpg")
+  );
+  sphere.meshes[0].material.texture.setNormal(
+    require("./Textures/world/norm.jpg")
+  );
+  sphere.meshes[0].material.texture.normalStrength = 0.5;
 
   // Linkeando los valores de la esfera
-  sphere.conf = sphereConf
-  objects.push(sphere)
+  sphere.conf = sphereConf;
+  objects.push(sphere);
 
   // Capturando el cursor para poder mover la camara.
-  document.addEventListener('pointerlockchange', e => {
+  document.addEventListener("pointerlockchange", (e) => {
     if (document.pointerLockElement !== canvas) {
-      canvas.onmousemove = null
+      canvas.onmousemove = null;
     }
-  })
+  });
 
   // Capturando las teclas apretadas para poder desplazar la camara.
-  document.addEventListener('keydown', e => {
-    keyPressed[e.key.toLowerCase()] = true
-  })
+  document.addEventListener("keydown", (e) => {
+    keyPressed[e.key.toLowerCase()] = true;
+  });
 
-  document.addEventListener('keyup', e => {
-    keyPressed[e.key.toLowerCase()] = false
-  })
+  document.addEventListener("keyup", (e) => {
+    keyPressed[e.key.toLowerCase()] = false;
+  });
 
   // Funcion para mover el pitch y yaw de la camara con el mouse.
-  canvas.addEventListener('contextmenu', e => {
-    e.preventDefault()
-    canvas.requestPointerLock()
+  canvas.addEventListener("contextmenu", (e) => {
+    e.preventDefault();
+    canvas.requestPointerLock();
     canvas.onmousemove = function (event) {
-      control.onMouseMove(camera, event)
-    }
-  })
+      control.onMouseMove(camera, event);
+    };
+  });
 
   // Prueba del raycasting de la camara.
-  canvas.addEventListener('click', event => {
-    let direction = wegGLRender.rayCasting(event.clientX, event.clientY, camera)
-    let position = camera.eye
-    let objs = wegGLRender.getSelectedObject(position, direction, scene)
-    /* const Ray = require('./Objects/Primitives/Ray')
-    let ray = new Ray(position, direction, 20)
-    scene.addObjects(ray) */
+  canvas.addEventListener("click", (event) => {
+    let direction = wegGLRender.rayCasting(
+      event.clientX,
+      event.clientY,
+      camera
+    );
+    let position = camera.eye;
+    let objs = wegGLRender.getSelectedObject(position, direction, scene);
+    const Ray = require("./Objects/Primitives/Ray");
+    let ray = new Ray(position, direction, 20);
+    scene.addObjects(ray);
 
     if (objs.length === 0) {
-      selectObject(null)
-      return
+      selectObject(null);
+      return;
     }
 
     objs = objs.sort((a, b) => {
-      return a[1] - b[1]
-    })
+      return a[1] - b[1];
+    });
 
-    selectObject(objs[0][0])
-  })
+    selectObject(objs[0][0]);
+  });
 
-  angle = 0
-  face = 0
-  maxAngle = 90
-  initGUI()
-  requestAnimationFrame(renderLoop)
+  angle = 0;
+  face = 0;
+  maxAngle = 90;
+  initGUI();
+  requestAnimationFrame(renderLoop);
 }
 
-function renderLoop () {
-  let conf
+function renderLoop() {
+  let conf;
 
   if (latstTime != null) {
-    let now = window.performance.now()
+    let now = window.performance.now();
 
-    fps.count = 1000 / (now - latstTime)
-    latstTime = now
+    fps.count = 1000 / (now - latstTime);
+    latstTime = now;
   } else {
-    latstTime = window.performance.now()
+    latstTime = window.performance.now();
   }
 
   for (let obj of objects) {
-    conf = obj.conf
-    obj.setTraslation(conf.pos)
-    obj.setScale(conf.scale)
-    obj.setRotation(conf.rotation)
+    conf = obj.conf;
+    obj.setTraslation(conf.pos);
+    obj.setScale(conf.scale);
+    obj.setRotation(conf.rotation);
     if (conf.rotationq) {
-      obj.setRotationQuaternion(conf.rotationq)
-      obj.useQuaternion = conf.useQuaternion
+      obj.setRotationQuaternion(conf.rotationq);
+      obj.useQuaternion = conf.useQuaternion;
     }
   }
 
   // Cubo
-  cube.showWireframe(cubeConf.showWireframe)
+  cube.showWireframe(cubeConf.showWireframe);
 
   // Cono
-  cone.showWireframe(coneConf.showWireframe)
-  cone.meshes[0].bounding.show = coneConf.showBounding
-  cone.shadeSmooth(coneConf.shadeSmooth)
+  cone.showWireframe(coneConf.showWireframe);
+  cone.meshes[0].bounding.show = coneConf.showBounding;
+  cone.shadeSmooth(coneConf.shadeSmooth);
   if (coneConf.vertex !== cone.baseVertexCount) {
-    cone.baseVertexCount = coneConf.vertex
-    cone.remesh()
+    cone.baseVertexCount = coneConf.vertex;
+    cone.remesh();
     if (cone.meshes[0].bounding instanceof BoundingBox) {
-      let res = cone.meshes[0].geometry.getExtremeBoxVertex()
-      cone.meshes[0].bounding.constructBox(res.min, res.max)
+      let res = cone.meshes[0].geometry.getExtremeBoxVertex();
+      cone.meshes[0].bounding.constructBox(res.min, res.max);
     }
   }
-  cone.showNomrals(coneConf.showNormals, 0.2)
+  cone.showNomrals(coneConf.showNormals, 0.2);
 
   // Cilindro
-  cylinder.showWireframe(cylinderConf.showWireframe)
-  cylinder.meshes[0].bounding.show = cylinderConf.showBounding
-  cylinder.shadeSmooth(cylinderConf.shadeSmooth)
-  cylinder.meshes[0].geometry.setSmoothAngle(cylinderConf.smoothAngle)
+  cylinder.showWireframe(cylinderConf.showWireframe);
+  cylinder.meshes[0].bounding.show = cylinderConf.showBounding;
+  cylinder.shadeSmooth(cylinderConf.shadeSmooth);
+  cylinder.meshes[0].geometry.setSmoothAngle(cylinderConf.smoothAngle);
 
   if (cylinderConf.segments !== cylinder.segments) {
-    cylinder.segments = cylinderConf.segments
-    cylinder.remesh()
+    cylinder.segments = cylinderConf.segments;
+    cylinder.remesh();
     if (cylinder.meshes[0].bounding instanceof BoundingBox) {
-      let res = cylinder.meshes[0].geometry.getExtremeBoxVertex()
-      cylinder.meshes[0].bounding.constructBox(res.min, res.max)
+      let res = cylinder.meshes[0].geometry.getExtremeBoxVertex();
+      cylinder.meshes[0].bounding.constructBox(res.min, res.max);
     }
   }
-  cylinder.showNomrals(cylinderConf.showNormals, 0.2)
+  cylinder.showNomrals(cylinderConf.showNormals, 0.2);
 
   // Esfera
-  sphere.showWireframe(sphereConf.showWireframe)
-  sphere.meshes[0].bounding.show = sphereConf.showBounding
-  sphere.shadeSmooth(sphereConf.shadeSmooth)
-  sphere.meshes[0].geometry.setSmoothAngle(sphereConf.smoothAngle)
+  sphere.showWireframe(sphereConf.showWireframe);
+  sphere.meshes[0].bounding.show = sphereConf.showBounding;
+  sphere.shadeSmooth(sphereConf.shadeSmooth);
+  sphere.meshes[0].geometry.setSmoothAngle(sphereConf.smoothAngle);
 
-  if (sphereConf.rings !== sphere.rings ||
+  if (
+    sphereConf.rings !== sphere.rings ||
     sphereConf.vertex !== sphere.vertexRing
   ) {
-    sphere.rings = sphereConf.rings
-    sphere.vertexRing = sphereConf.vertex
-    sphere.remesh()
+    sphere.rings = sphereConf.rings;
+    sphere.vertexRing = sphereConf.vertex;
+    sphere.remesh();
     if (sphere.meshes[0].bounding instanceof BoundingBox) {
-      let res = sphere.meshes[0].geometry.getExtremeBoxVertex()
-      sphere.meshes[0].bounding.constructBox(res.min, res.max)
+      let res = sphere.meshes[0].geometry.getExtremeBoxVertex();
+      sphere.meshes[0].bounding.constructBox(res.min, res.max);
     }
   }
-  sphere.showNomrals(sphereConf.showNormals, 0.2)
+  sphere.showNomrals(sphereConf.showNormals, 0.2);
 
   // Animacion Rotacion local
   if (cubeConf.anim) {
     if (angle >= maxAngle) {
-      angle = 0
-      face = Math.round(Math.random() * 2)
-      maxAngle = Math.round(Math.random() * 45 + 45)
+      angle = 0;
+      face = Math.round(Math.random() * 2);
+      maxAngle = Math.round(Math.random() * 45 + 45);
     }
-    let rot = cube.rotateLocal(1, face)
-    cubeConf.rotation.copy(rot)
-    angle++
+    let rot = cube.rotateLocal(1, face);
+    cubeConf.rotation.copy(rot);
+    angle++;
   }
 
   // Camara
   if (cameraConf.useOrthographicCamera && camera instanceof PerspectiveCamera) {
-    camera = new OrthographicCamera()
+    camera = new OrthographicCamera();
 
     // Linkeando los valores de la nueva camara.
-    camera.addPitch(control.fpsConf.rpy[1])
-  } else if (!cameraConf.useOrthographicCamera && camera instanceof OrthographicCamera) {
-    camera = new PerspectiveCamera(cameraConf.fov, canvas.clientWidth / canvas.clientHeight)
+    camera.addPitch(control.fpsConf.rpy[1]);
+  } else if (
+    !cameraConf.useOrthographicCamera &&
+    camera instanceof OrthographicCamera
+  ) {
+    camera = new PerspectiveCamera(
+      cameraConf.fov,
+      canvas.clientWidth / canvas.clientHeight
+    );
 
     // Linkeando los valores de la nueva camara.
-    camera.addPitch(control.fpsConf.rpy[1])
+    camera.addPitch(control.fpsConf.rpy[1]);
   }
-  camera.setLookAtEnable(cameraConf.useLookAt)
+  camera.setLookAtEnable(cameraConf.useLookAt);
 
   // Configuracion de la camara
   if (camera instanceof PerspectiveCamera) {
-    camera.setFovFromDegrees(cameraConf.fov)
+    camera.setFovFromDegrees(cameraConf.fov);
   }
 
-  camera.setPosition(cameraConf.eye)
-  camera.setLookAt(cameraConf.center)
+  camera.setPosition(cameraConf.eye);
+  camera.setLookAt(cameraConf.center);
 
   // Controles para la camara libre
-  control.updateCamera(keyPressed, camera)
-  cameraConf.eye.copy(camera.eye)
+  control.updateCamera(keyPressed, camera);
+  cameraConf.eye.copy(camera.eye);
 
-  flashlight.setDirection(camera.getLookDirection())
-  flashlight.setPosition(camera.eye)
-  flashlight.setEnable(flashligthConf.enable)
+  flashlight.setDirection(camera.getLookDirection());
+  flashlight.setPosition(camera.eye);
+  flashlight.setEnable(flashligthConf.enable);
 
   // Actualizando la grilla y los ejes.
-  grid.enableRender = gridConf.enable
-  axis.enableRender = gridConf.enable
+  grid.enableRender = gridConf.enable;
+  axis.enableRender = gridConf.enable;
 
   // Actualizando luces.
   // Luz ambiental.
-  scene.ambientLight.setColor(Vec3.fromArray(ambientLightConf.color))
-  scene.ambientLight.setIntensity(ambientLightConf.intensity)
+  scene.ambientLight.setColor(Vec3.fromArray(ambientLightConf.color));
+  scene.ambientLight.setIntensity(ambientLightConf.intensity);
 
   // Luz direccional
-  scene.dirLight.setColor(Vec3.fromArray(direccionalLightConf.color))
-  scene.dirLight.setIntensity(direccionalLightConf.intensity)
-  scene.dirLight.setDirection(direccionalLightConf.direction)
+  scene.dirLight.setColor(Vec3.fromArray(direccionalLightConf.color));
+  scene.dirLight.setIntensity(direccionalLightConf.intensity);
+  scene.dirLight.setDirection(direccionalLightConf.direction);
 
   // Luces Posicionales.
   for (let light of Lights) {
-    conf = light.conf
-    light.setIntensity(conf.intensity)
-    light.showRepresentation(conf.showRepresentation)
+    conf = light.conf;
+    light.setIntensity(conf.intensity);
+    light.showRepresentation(conf.showRepresentation);
     if (conf.pos) {
-      light.setPosition(conf.pos)
+      light.setPosition(conf.pos);
     }
-    light.setEnable(conf.enable * sceneConf.enablePositionalLights)
+    light.setEnable(conf.enable * sceneConf.enablePositionalLights);
 
-    light.setColor(Vec3.fromArray(conf.color))
+    light.setColor(Vec3.fromArray(conf.color));
     if (conf.maxAngle) {
-      light.setAngle(conf.maxAngle)
+      light.setAngle(conf.maxAngle);
     }
     if (conf.direction) {
-      light.setDirection(conf.direction)
+      light.setDirection(conf.direction);
     }
   }
 
-  wegGLRender.clearBackground(scene.clearColor)
-  wegGLRender.render(scene, camera)
+  wegGLRender.clearBackground(scene.clearColor);
+  wegGLRender.render(scene, camera);
 
-  requestAnimationFrame(renderLoop)
+  requestAnimationFrame(renderLoop);
 }
 
 /**
  * @param {SceneObject} obj
  */
-function selectObject (obj) {
+function selectObject(obj) {
   if (sceneConf.selectedObj) {
-    sceneConf.selectedObj.showLocalAxis = false
+    sceneConf.selectedObj.showLocalAxis = false;
   }
   if (obj && obj !== sceneConf.selectedObj) {
-    obj.showLocalAxis = true
-    sceneConf.selectedObj = obj
-    console.log('Now selecting ' + obj.constructor.name)
+    obj.showLocalAxis = true;
+    sceneConf.selectedObj = obj;
+    console.log("Now selecting " + obj.constructor.name);
   } else if (sceneConf.selectedObj) {
-    console.log('Deselecting ' + sceneConf.selectedObj.constructor.name)
-    sceneConf.selectedObj = null
+    console.log("Deselecting " + sceneConf.selectedObj.constructor.name);
+    sceneConf.selectedObj = null;
   }
 }
 
 // Configuracion de la GUI
-function initGUI () {
-  let gui = new dat.GUI()
-  gui.close()
+function initGUI() {
+  let gui = new dat.GUI();
+  gui.close();
   // Grilla y Ejes
-  gui.add(gridConf, 'enable').name('Show grid & axis')
-  gui.add(floor.meshes[0].material.texture, 'normalStrength', 0, 2, 0.01).name('Floor strength')
-  gui.add(flashligthConf, 'enable').name('Flashligth')
-  gui.add(fps, 'count').listen().step(0.1).name('FPS')
+  gui.add(gridConf, "enable").name("Show grid & axis");
+  gui
+    .add(floor.meshes[0].material.texture, "normalStrength", 0, 2, 0.01)
+    .name("Floor strength");
+  gui.add(flashligthConf, "enable").name("Flashligth");
+  gui.add(fps, "count").listen().step(0.1).name("FPS");
 
   // Objectos
-  let object = gui.addFolder('Objects')
+  let object = gui.addFolder("Objects");
 
   // Cubo
-  let cubeGUI = object.addFolder('Cube')
-  cubeGUI.add(cubeConf, 'showWireframe')
-  cubeGUI.add(cubeConf, 'useQuaternion')
-  cubeGUI.add(cubeConf, 'anim')
-  let positionGUI = cubeGUI.addFolder('Position')
-  positionGUI.add(cubeConf.pos, 'x', -10, 10).name('X')
-  positionGUI.add(cubeConf.pos, 'y', -10, 10).name('Y')
-  positionGUI.add(cubeConf.pos, 'z', -10, 10).name('Z')
-  let scaleGUI = cubeGUI.addFolder('Scale')
-  scaleGUI.add(cubeConf.scale, 'x', 0, 10).name('X')
-  scaleGUI.add(cubeConf.scale, 'y', 0, 10).name('Y')
-  scaleGUI.add(cubeConf.scale, 'z', 0, 10).name('Z')
-  let rotateGUI = cubeGUI.addFolder('Rotate')
-  rotateGUI.add(cubeConf.rotation, 'x').name('X').listen()
-  rotateGUI.add(cubeConf.rotation, 'y').name('Y').listen()
-  rotateGUI.add(cubeConf.rotation, 'z').name('Z').listen()
-  let rotateQGUI = cubeGUI.addFolder('RotateQuaternion')
-  rotateQGUI.add(cubeConf.rotationq, 0, 0, 1).name('X')
-  rotateQGUI.add(cubeConf.rotationq, 1, 0, 1).name('Y')
-  rotateQGUI.add(cubeConf.rotationq, 2, 0, 1).name('Z')
-  rotateQGUI.add(cubeConf.rotationq, 3, 0, 10).name('W')
+  let cubeGUI = object.addFolder("Cube");
+  cubeGUI.add(cubeConf, "showWireframe");
+  cubeGUI.add(cubeConf, "useQuaternion");
+  cubeGUI.add(cubeConf, "anim");
+  let positionGUI = cubeGUI.addFolder("Position");
+  positionGUI.add(cubeConf.pos, "x", -10, 10).name("X");
+  positionGUI.add(cubeConf.pos, "y", -10, 10).name("Y");
+  positionGUI.add(cubeConf.pos, "z", -10, 10).name("Z");
+  let scaleGUI = cubeGUI.addFolder("Scale");
+  scaleGUI.add(cubeConf.scale, "x", 0, 10).name("X");
+  scaleGUI.add(cubeConf.scale, "y", 0, 10).name("Y");
+  scaleGUI.add(cubeConf.scale, "z", 0, 10).name("Z");
+  let rotateGUI = cubeGUI.addFolder("Rotate");
+  rotateGUI.add(cubeConf.rotation, "x").name("X").listen();
+  rotateGUI.add(cubeConf.rotation, "y").name("Y").listen();
+  rotateGUI.add(cubeConf.rotation, "z").name("Z").listen();
+  let rotateQGUI = cubeGUI.addFolder("RotateQuaternion");
+  rotateQGUI.add(cubeConf.rotationq, 0, 0, 1).name("X");
+  rotateQGUI.add(cubeConf.rotationq, 1, 0, 1).name("Y");
+  rotateQGUI.add(cubeConf.rotationq, 2, 0, 1).name("Z");
+  rotateQGUI.add(cubeConf.rotationq, 3, 0, 10).name("W");
 
   // Cono
-  let coneGUI = object.addFolder('Cone')
-  coneGUI.add(coneConf, 'showWireframe')
-  coneGUI.add(coneConf, 'showBounding')
-  coneGUI.add(coneConf, 'shadeSmooth')
-  coneGUI.add(coneConf, 'showNormals')
-  coneGUI.add(coneConf, 'vertex', 3, 64, 1).name('Base Vertex')
-  positionGUI = coneGUI.addFolder('Position')
-  positionGUI.add(coneConf.pos, 'x', -10, 10).name('X')
-  positionGUI.add(coneConf.pos, 'y', -10, 10).name('Y')
-  positionGUI.add(coneConf.pos, 'z', -10, 10).name('Z')
-  scaleGUI = coneGUI.addFolder('Scale')
-  scaleGUI.add(coneConf.scale, 'x', 0, 10).name('X')
-  scaleGUI.add(coneConf.scale, 'y', 0, 10).name('Y')
-  scaleGUI.add(coneConf.scale, 'z', 0, 10).name('Z')
-  rotateGUI = coneGUI.addFolder('Rotate')
-  rotateGUI.add(coneConf.rotation, 'x', 0, 360).name('X')
-  rotateGUI.add(coneConf.rotation, 'y', 0, 360).name('Y')
-  rotateGUI.add(coneConf.rotation, 'z', 0, 360).name('Z')
+  let coneGUI = object.addFolder("Cone");
+  coneGUI.add(coneConf, "showWireframe");
+  coneGUI.add(coneConf, "showBounding");
+  coneGUI.add(coneConf, "shadeSmooth");
+  coneGUI.add(coneConf, "showNormals");
+  coneGUI.add(coneConf, "vertex", 3, 64, 1).name("Base Vertex");
+  positionGUI = coneGUI.addFolder("Position");
+  positionGUI.add(coneConf.pos, "x", -10, 10).name("X");
+  positionGUI.add(coneConf.pos, "y", -10, 10).name("Y");
+  positionGUI.add(coneConf.pos, "z", -10, 10).name("Z");
+  scaleGUI = coneGUI.addFolder("Scale");
+  scaleGUI.add(coneConf.scale, "x", 0, 10).name("X");
+  scaleGUI.add(coneConf.scale, "y", 0, 10).name("Y");
+  scaleGUI.add(coneConf.scale, "z", 0, 10).name("Z");
+  rotateGUI = coneGUI.addFolder("Rotate");
+  rotateGUI.add(coneConf.rotation, "x", 0, 360).name("X");
+  rotateGUI.add(coneConf.rotation, "y", 0, 360).name("Y");
+  rotateGUI.add(coneConf.rotation, "z", 0, 360).name("Z");
 
   // Cilindro
-  let cylinderGUI = object.addFolder('Cylinder')
-  cylinderGUI.add(cylinderConf, 'showWireframe')
-  cylinderGUI.add(cylinderConf, 'showBounding')
-  cylinderGUI.add(cylinderConf, 'shadeSmooth')
-  cylinderGUI.add(cylinderConf, 'showNormals')
-  cylinderGUI.add(cylinderConf, 'smoothAngle', 0, 90, 0.1)
-  cylinderGUI.add(cylinderConf, 'segments', 3, 64, 1).name('Segments')
-  positionGUI = cylinderGUI.addFolder('Position')
-  positionGUI.add(cylinderConf.pos, 'x', -10, 10).name('X')
-  positionGUI.add(cylinderConf.pos, 'y', -10, 10).name('Y')
-  positionGUI.add(cylinderConf.pos, 'z', -10, 10).name('Z')
-  scaleGUI = cylinderGUI.addFolder('Scale')
-  scaleGUI.add(cylinderConf.scale, 'x', 0, 10).name('X')
-  scaleGUI.add(cylinderConf.scale, 'y', 0, 10).name('Y')
-  scaleGUI.add(cylinderConf.scale, 'z', 0, 10).name('Z')
-  rotateGUI = cylinderGUI.addFolder('Rotate')
-  rotateGUI.add(cylinderConf.rotation, 'x', 0, 360).name('X')
-  rotateGUI.add(cylinderConf.rotation, 'y', 0, 360).name('Y')
-  rotateGUI.add(cylinderConf.rotation, 'z', 0, 360).name('Z')
+  let cylinderGUI = object.addFolder("Cylinder");
+  cylinderGUI.add(cylinderConf, "showWireframe");
+  cylinderGUI.add(cylinderConf, "showBounding");
+  cylinderGUI.add(cylinderConf, "shadeSmooth");
+  cylinderGUI.add(cylinderConf, "showNormals");
+  cylinderGUI.add(cylinderConf, "smoothAngle", 0, 90, 0.1);
+  cylinderGUI.add(cylinderConf, "segments", 3, 64, 1).name("Segments");
+  positionGUI = cylinderGUI.addFolder("Position");
+  positionGUI.add(cylinderConf.pos, "x", -10, 10).name("X");
+  positionGUI.add(cylinderConf.pos, "y", -10, 10).name("Y");
+  positionGUI.add(cylinderConf.pos, "z", -10, 10).name("Z");
+  scaleGUI = cylinderGUI.addFolder("Scale");
+  scaleGUI.add(cylinderConf.scale, "x", 0, 10).name("X");
+  scaleGUI.add(cylinderConf.scale, "y", 0, 10).name("Y");
+  scaleGUI.add(cylinderConf.scale, "z", 0, 10).name("Z");
+  rotateGUI = cylinderGUI.addFolder("Rotate");
+  rotateGUI.add(cylinderConf.rotation, "x", 0, 360).name("X");
+  rotateGUI.add(cylinderConf.rotation, "y", 0, 360).name("Y");
+  rotateGUI.add(cylinderConf.rotation, "z", 0, 360).name("Z");
 
   // Esfera
-  let sphereGUI = object.addFolder('Sphere')
-  sphereGUI.add(sphereConf, 'showWireframe')
-  sphereGUI.add(sphereConf, 'showBounding')
-  sphereGUI.add(sphereConf, 'shadeSmooth')
-  sphereGUI.add(sphereConf, 'showNormals')
-  sphereGUI.add(sphereConf, 'smoothAngle', 0, 90, 0.1)
-  sphereGUI.add(sphere.meshes[0].material, 'roughness', 0.0, 1.0, 0.01)
-  sphereGUI.add(sphereConf, 'vertex', 3, 64, 1).name('Ring Vertex')
-  sphereGUI.add(sphereConf, 'rings', 1, 64, 1).name('Rings')
+  let sphereGUI = object.addFolder("Sphere");
+  sphereGUI.add(sphereConf, "showWireframe");
+  sphereGUI.add(sphereConf, "showBounding");
+  sphereGUI.add(sphereConf, "shadeSmooth");
+  sphereGUI.add(sphereConf, "showNormals");
+  sphereGUI.add(sphereConf, "smoothAngle", 0, 90, 0.1);
+  sphereGUI.add(sphere.meshes[0].material, "roughness", 0.0, 1.0, 0.01);
+  sphereGUI.add(sphereConf, "vertex", 3, 64, 1).name("Ring Vertex");
+  sphereGUI.add(sphereConf, "rings", 1, 64, 1).name("Rings");
 
-  positionGUI = sphereGUI.addFolder('Position')
-  positionGUI.add(sphereConf.pos, 'x', -10, 10).name('X')
-  positionGUI.add(sphereConf.pos, 'y', -10, 10).name('Y')
-  positionGUI.add(sphereConf.pos, 'z', -10, 10).name('Z')
-  scaleGUI = sphereGUI.addFolder('Scale')
-  scaleGUI.add(sphereConf.scale, 'x', 0, 10).name('X')
-  scaleGUI.add(sphereConf.scale, 'y', 0, 10).name('Y')
-  scaleGUI.add(sphereConf.scale, 'z', 0, 10).name('Z')
-  rotateGUI = sphereGUI.addFolder('Rotate')
-  rotateGUI.add(sphereConf.rotation, 'x', 0, 360).name('X')
-  rotateGUI.add(sphereConf.rotation, 'y', 0, 360).name('Y')
-  rotateGUI.add(sphereConf.rotation, 'z', 0, 360).name('Z')
+  positionGUI = sphereGUI.addFolder("Position");
+  positionGUI.add(sphereConf.pos, "x", -10, 10).name("X");
+  positionGUI.add(sphereConf.pos, "y", -10, 10).name("Y");
+  positionGUI.add(sphereConf.pos, "z", -10, 10).name("Z");
+  scaleGUI = sphereGUI.addFolder("Scale");
+  scaleGUI.add(sphereConf.scale, "x", 0, 10).name("X");
+  scaleGUI.add(sphereConf.scale, "y", 0, 10).name("Y");
+  scaleGUI.add(sphereConf.scale, "z", 0, 10).name("Z");
+  rotateGUI = sphereGUI.addFolder("Rotate");
+  rotateGUI.add(sphereConf.rotation, "x", 0, 360).name("X");
+  rotateGUI.add(sphereConf.rotation, "y", 0, 360).name("Y");
+  rotateGUI.add(sphereConf.rotation, "z", 0, 360).name("Z");
 
   // Camara
-  let cameraGUI = gui.addFolder('Camera')
-  cameraGUI.add(cameraConf, 'fov', 0, 90)
-  cameraGUI.add(cameraConf, 'useLookAt').name('Use LookAt?')
-  cameraGUI.add(cameraConf, 'useOrthographicCamera')
-  let cameraPositionGUI = cameraGUI.addFolder('Position')
-  cameraPositionGUI.add(cameraConf.eye, 'x').name('X').listen()
-  cameraPositionGUI.add(cameraConf.eye, 'y').name('Y').listen()
-  cameraPositionGUI.add(cameraConf.eye, 'z').name('Z').listen()
-  let cameraRotationGUI = cameraGUI.addFolder('Look At')
-  cameraRotationGUI.add(cameraConf.center, 'x', -10, 10).name('X')
-  cameraRotationGUI.add(cameraConf.center, 'y', -10, 10).name('Y')
-  cameraRotationGUI.add(cameraConf.center, 'z', -10, 10).name('Z')
+  let cameraGUI = gui.addFolder("Camera");
+  cameraGUI.add(cameraConf, "fov", 0, 90);
+  cameraGUI.add(cameraConf, "useLookAt").name("Use LookAt?");
+  cameraGUI.add(cameraConf, "useOrthographicCamera");
+  let cameraPositionGUI = cameraGUI.addFolder("Position");
+  cameraPositionGUI.add(cameraConf.eye, "x").name("X").listen();
+  cameraPositionGUI.add(cameraConf.eye, "y").name("Y").listen();
+  cameraPositionGUI.add(cameraConf.eye, "z").name("Z").listen();
+  let cameraRotationGUI = cameraGUI.addFolder("Look At");
+  cameraRotationGUI.add(cameraConf.center, "x", -10, 10).name("X");
+  cameraRotationGUI.add(cameraConf.center, "y", -10, 10).name("Y");
+  cameraRotationGUI.add(cameraConf.center, "z", -10, 10).name("Z");
 
   // Luces
-  let lucesGUI = gui.addFolder('Lights')
+  let lucesGUI = gui.addFolder("Lights");
 
   // Luz de ambiente.
-  let ambientGUI = lucesGUI.addFolder('Ambient Light')
-  ambientGUI.addColor(ambientLightConf, 'color').name('Color')
-  ambientGUI.add(ambientLightConf, 'intensity', 0.0, 1.0, 0.01).name('Intensity')
+  let ambientGUI = lucesGUI.addFolder("Ambient Light");
+  ambientGUI.addColor(ambientLightConf, "color").name("Color");
+  ambientGUI
+    .add(ambientLightConf, "intensity", 0.0, 1.0, 0.01)
+    .name("Intensity");
 
   // Luz direccional.
-  let dirLight = lucesGUI.addFolder('Directional Light')
-  dirLight.addColor(direccionalLightConf, 'color').name('Color')
-  dirLight.add(direccionalLightConf, 'intensity', 0.0, 1.0, 0.01).name('Intensity')
-  positionGUI = dirLight.addFolder('Direction')
-  positionGUI.add(direccionalLightConf.direction, 'x', -10, 10).name('X')
-  positionGUI.add(direccionalLightConf.direction, 'y', -10, 10).name('Y')
-  positionGUI.add(direccionalLightConf.direction, 'z', -10, 10).name('Z')
+  let dirLight = lucesGUI.addFolder("Directional Light");
+  dirLight.addColor(direccionalLightConf, "color").name("Color");
+  dirLight
+    .add(direccionalLightConf, "intensity", 0.0, 1.0, 0.01)
+    .name("Intensity");
+  positionGUI = dirLight.addFolder("Direction");
+  positionGUI.add(direccionalLightConf.direction, "x", -10, 10).name("X");
+  positionGUI.add(direccionalLightConf.direction, "y", -10, 10).name("Y");
+  positionGUI.add(direccionalLightConf.direction, "z", -10, 10).name("Z");
 
   // Luces Posicionales
-  let pointGUI = lucesGUI.addFolder('Positional Lights')
-  pointGUI.add(sceneConf, 'enablePositionalLights').name('Enable All')
-  let pointIGUI
-  let conf
+  let pointGUI = lucesGUI.addFolder("Positional Lights");
+  pointGUI.add(sceneConf, "enablePositionalLights").name("Enable All");
+  let pointIGUI;
+  let conf;
   for (let i = 0; i < Lights.length; i++) {
-    conf = Lights[i].conf
-    pointIGUI = pointGUI.addFolder(conf.name)
-    pointIGUI.add(conf, 'intensity', 0, 100, 0.1)
-    pointIGUI.add(conf, 'enable').name('Enable')
-    pointIGUI.add(conf, 'showRepresentation').name('Show Cube')
-    pointIGUI.addColor(conf, 'color')
+    conf = Lights[i].conf;
+    pointIGUI = pointGUI.addFolder(conf.name);
+    pointIGUI.add(conf, "intensity", 0, 100, 0.1);
+    pointIGUI.add(conf, "enable").name("Enable");
+    pointIGUI.add(conf, "showRepresentation").name("Show Cube");
+    pointIGUI.addColor(conf, "color");
 
-    if (conf.hasOwnProperty('maxAngle')) {
-      pointIGUI.add(conf, 'maxAngle', 0, 90, 0.01)
+    if (conf.hasOwnProperty("maxAngle")) {
+      pointIGUI.add(conf, "maxAngle", 0, 90, 0.01);
     }
 
-    if (conf.hasOwnProperty('direction')) {
-      positionGUI = pointIGUI.addFolder('Direction')
-      positionGUI.add(conf.direction, 'x', -10, 10, 0.01).name('X')
-      positionGUI.add(conf.direction, 'y', -10, 10, 0.01).name('Y')
-      positionGUI.add(conf.direction, 'z', -10, 10, 0.01).name('Z')
+    if (conf.hasOwnProperty("direction")) {
+      positionGUI = pointIGUI.addFolder("Direction");
+      positionGUI.add(conf.direction, "x", -10, 10, 0.01).name("X");
+      positionGUI.add(conf.direction, "y", -10, 10, 0.01).name("Y");
+      positionGUI.add(conf.direction, "z", -10, 10, 0.01).name("Z");
     }
 
-    let maxPos = 20
+    let maxPos = 20;
 
-    positionGUI = pointIGUI.addFolder('Position')
-    positionGUI.add(conf.pos, 'x', -maxPos, maxPos).name('X')
-    positionGUI.add(conf.pos, 'y', -maxPos, maxPos).name('Y').step(0.01)
-    positionGUI.add(conf.pos, 'z', -maxPos, maxPos).name('Z')
+    positionGUI = pointIGUI.addFolder("Position");
+    positionGUI.add(conf.pos, "x", -maxPos, maxPos).name("X");
+    positionGUI.add(conf.pos, "y", -maxPos, maxPos).name("Y").step(0.01);
+    positionGUI.add(conf.pos, "z", -maxPos, maxPos).name("Z");
   }
 }
 
-init('c')
+init("c");
